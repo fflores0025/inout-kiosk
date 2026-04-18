@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="theme-color" content="#07070f"/>
+  <title>InOut · Recarga tu pulsera</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    :root{
+      --bg:#07070f;--surf:#0d0d1a;--card:#111120;--border:#1c1c2e;
+      --a1:#c8ff00;--a2:#ff3cac;--a3:#00d4ff;
+      --txt:#e6e6f0;--muted:#60607a;
+      --success:#00e676;--danger:#ff1744;--warn:#ffab00;
+    }
+    html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--txt);background:var(--bg);overflow:hidden;touch-action:manipulation;user-select:none;}
+
+    /* ── KIOSK LAYOUT ── */
+    .kiosk{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:600px;margin:0 auto;padding:20px;position:relative;}
+    .k-header{text-align:center;padding:16px 0 12px;flex-shrink:0;}
+    .k-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.5px;}
+    .k-logo .dot{color:var(--a1);}
+    .k-logo small{display:block;font-family:'DM Sans',sans-serif;font-weight:400;font-size:11px;color:var(--a3);text-transform:uppercase;letter-spacing:2px;margin-top:2px;}
+    .k-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;padding:10px 0;}
+    .k-footer{text-align:center;padding:10px 0;flex-shrink:0;font-size:11px;color:var(--muted);}
+
+    /* ── NFC RING ── */
+    .nfc-ring{width:200px;height:200px;border-radius:50%;border:3px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .3s;margin:0 auto;}
+    .nfc-ring.scanning{border-color:var(--a3);animation:pulse 2s ease-in-out infinite;}
+    .nfc-ring.success{border-color:var(--success);background:rgba(0,230,118,.06);animation:none;}
+    .nfc-ring.error{border-color:var(--danger);background:rgba(255,23,68,.06);animation:none;}
+    .nfc-ring .emoji{font-size:64px;}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.3)}50%{box-shadow:0 0 0 24px rgba(0,212,255,0)}}
+
+    .k-title{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;text-align:center;margin-top:20px;}
+    .k-sub{color:var(--muted);font-size:14px;text-align:center;margin-top:6px;}
+
+    /* ── BALANCE CARD ── */
+    .bal-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;margin-top:20px;text-align:center;}
+    .bal-name{font-size:16px;font-weight:500;margin-bottom:4px;}
+    .bal-uid{font-size:12px;color:var(--muted);font-family:monospace;}
+    .bal-amount{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--a1);margin:12px 0 4px;}
+    .bal-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+
+    /* ── TOPUP GRID ── */
+    .topup-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;width:100%;margin-top:20px;}
+    .topup-btn{padding:24px 8px;border-radius:14px;background:var(--card);border:2px solid var(--border);text-align:center;cursor:pointer;transition:all .15s;}
+    .topup-btn:active,.topup-btn.selected{border-color:var(--a1);background:rgba(200,255,0,.06);transform:scale(.96);}
+    .topup-btn .amount{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--a1);}
+    .topup-btn .fee{font-size:11px;color:var(--muted);margin-top:4px;}
+
+    /* ── BUTTONS ── */
+    .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 32px;border-radius:14px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:17px;font-weight:600;transition:all .12s;width:100%;min-height:56px;}
+    .btn:active{transform:scale(.96);opacity:.85;}
+    .btn-p{background:var(--a1);color:#000;}
+    .btn-g{background:transparent;color:var(--muted);border:1px solid var(--border);}
+    .btn-danger{background:rgba(255,23,68,.12);color:var(--danger);border:1px solid rgba(255,23,68,.2);}
+
+    /* ── SUMMARY ── */
+    .summary{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;width:100%;margin-top:16px;}
+    .sum-row{display:flex;justify-content:space-between;padding:8px 0;font-size:15px;}
+    .sum-row.total{border-top:1px solid var(--border);padding-top:14px;margin-top:6px;font-weight:700;}
+    .sum-row.total .val{color:var(--a1);font-family:'Syne',sans-serif;font-size:22px;}
+
+    /* ── RESULT OVERLAY ── */
+    .result-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:500;animation:fadeIn .2s ease;}
+    .result-overlay.success{background:rgba(0,40,10,.92);}
+    .result-overlay.error{background:rgba(50,0,0,.92);}
+    .result-emoji{font-size:80px;margin-bottom:16px;}
+    .result-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;text-align:center;}
+    .result-sub{font-size:16px;color:var(--muted);margin-top:8px;text-align:center;}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+    /* ── PROCESSING ── */
+    .proc-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px;width:100%;text-align:center;}
+    .proc-status{padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin:16px 0;font-size:14px;color:var(--warn);}
+
+    /* ── TOAST ── */
+    #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 24px;font-size:14px;z-index:1000;transition:transform .3s;white-space:nowrap;}
+    #toast.show{transform:translateX(-50%) translateY(0);}
+
+    /* ── IDLE ANIMATION ── */
+    .idle-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(200,255,0,.06) 0%,transparent 70%);pointer-events:none;z-index:0;}
+  </style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="kiosk" id="kiosk">
+  <div class="idle-glow"></div>
+  <div class="k-header">
+    <div class="k-logo">InOut<span class="dot">.</span><small>Recarga cashless</small></div>
+  </div>
+  <div class="k-body" id="k-body"></div>
+  <div class="k-footer">Powered by InOut Media · Pagos seguros vía SumUp</div>
+</div>
+
+<script>
+const SB_URL='https://raoxkjnwrccoxjcipfpv.supabase.co';
+const SB_KEY='sb_publishable__-K1pC4bOJHRf8JQ__OOzg_jqLxlGla';
+const API_URL='https://inout-api.vercel.app';
+const SUMUP_AFFILIATE='sup_afk_Yw5nEDC5oRf34ycz09JFqPkR1DLQR5MH';
+const FEE_PERCENT=3.5;
+
+const _sb=supabase.createClient(SB_URL,SB_KEY);
+let nfcReader=null,nfcSupported=false;
+let currentWristband=null,selectedAmount=0;
+let checkInterval=null;
+
+function toast(msg,ms=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),ms);}
+function fmt(n){return(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function calcFee(a){return Math.round(a*FEE_PERCENT)/100;}
+
+// ═══ NFC ═══
+async function initNFC(){
+  if('NDEFReader' in window){
+    nfcSupported=true;
+    try{
+      nfcReader=new NDEFReader();
+      await nfcReader.scan();
+      nfcReader.onreading=(ev)=>{
+        const uid=ev.serialNumber.replace(/:/g,'').toUpperCase();
+        onScan(uid);
+      };
+    }catch(e){nfcSupported=false;}
+  }
+}
+
+function manualUID(){
+  const uid=prompt('Introduce el UID de tu pulsera:');
+  if(uid&&uid.trim())onScan(uid.trim().toUpperCase());
+}
+
+// ═══ SCREENS ═══
+
+// 1. IDLE — Waiting for wristband
+function showIdle(){
+  currentWristband=null;selectedAmount=0;
+  if(checkInterval){clearInterval(checkInterval);checkInterval=null;}
+  document.getElementById('k-body').innerHTML=`
+    <div class="nfc-ring scanning"><span class="emoji">👋</span></div>
+    <div class="k-title">Acerca tu pulsera</div>
+    <div class="k-sub">Para consultar tu saldo o recargar</div>
+    <button class="btn btn-g" style="margin-top:24px;max-width:280px" onclick="manualUID()">Introducir código manual</button>
+  `;
+}
+
+// 2. BALANCE — Show balance + topup options
+function showBalance(wb){
+  currentWristband=wb;selectedAmount=0;
+  const amounts=[5,10,20,30,50,100];
+  document.getElementById('k-body').innerHTML=`
+    <div class="bal-card">
+      <div class="bal-name">${wb.holder_name||'Pulsera'}</div>
+      <div class="bal-uid">${wb.uid}</div>
+      <div class="bal-amount">${fmt(wb.balance)}€</div>
+      <div class="bal-label">Saldo disponible</div>
+    </div>
+    <div class="k-title" style="margin-top:24px;font-size:18px">¿Cuánto quieres recargar?</div>
+    <div class="topup-grid">
+      ${amounts.map(a=>`<div class="topup-btn" id="tb-${a}" onclick="selectAmount(${a})"><div class="amount">${a}€</div><div class="fee">Pagas ${fmt(a+calcFee(a))}€</div></div>`).join('')}
+    </div>
+    <div style="margin-top:16px;width:100%" id="pay-section">
+      <button class="btn btn-p" id="pay-btn" onclick="startPayment()" disabled style="opacity:.5">Selecciona un importe</button>
+    </div>
+    <button class="btn btn-g" style="margin-top:10px" onclick="showIdle()">← Volver</button>
+  `;
+}
+
+function selectAmount(a){
+  selectedAmount=a;
+  document.querySelectorAll('.topup-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('tb-'+a)?.classList.add('selected');
+  const btn=document.getElementById('pay-btn');
+  const fee=calcFee(a);
+  btn.disabled=false;btn.style.opacity='1';
+  btn.textContent='Pagar '+fmt(a+fee)+'€ y recargar '+a+'€';
+}
+
+// 3. PAYMENT — Process with SumUp
+async function startPayment(){
+  if(!currentWristband||selectedAmount<=0)return;
+  const btn=document.getElementById('pay-btn');
+  btn.disabled=true;btn.textContent='Procesando...';
+
+  try{
+    const res=await fetch(API_URL+'/api/rfid/topup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        wristband_id:currentWristband.id,
+        uid:currentWristband.uid,
+        amount:selectedAmount,
+        event_id:currentWristband.event_id,
+        operator:'Kiosco autoservicio',
+        return_origin:'https://inout-kiosk.vercel.app',
+      })
+    });
+    const data=await res.json();
+    if(data.error){toast('Error: '+data.error);btn.disabled=false;btn.textContent='Reintentar';return;}
+
+    // Guardar para verificar
+    sessionStorage.setItem('k_sumup_id',data.sumup_checkout_id);
+    sessionStorage.setItem('k_wb_id',currentWristband.id);
+    sessionStorage.setItem('k_amount',String(selectedAmount));
+    sessionStorage.setItem('k_ref',data.reference);
+
+    // Detectar Android → deep link datáfono, sino pasarela web
+    const isAndroid=/Android/i.test(navigator.userAgent);
+    if(isAndroid){
+      const deepLink='sumupmerchant://pay/1.0'
+        +'?affiliate-key='+SUMUP_AFFILIATE
+        +'&app-id=com.inoutmedia.valid'
+        +'&total='+(selectedAmount+calcFee(selectedAmount)).toFixed(2)
+        +'&currency=EUR'
+        +'&title=Recarga+pulsera+'+(currentWristband.holder_name||currentWristband.uid)
+        +'&foreign-tx-id='+data.reference
+        +'&skip-screen-success=true'
+        +'&callback='+encodeURIComponent('https://inout-kiosk.vercel.app');
+      window.location.href=deepLink;
+    }else{
+      window.open(data.checkout_url,'_blank');
+    }
+
+    showProcessing(data);
+  }catch(err){
+    toast('Error de conexión');
+    btn.disabled=false;btn.textContent='Reintentar';
+  }
+}
+
+// 4. PROCESSING — Waiting for payment confirmation
+function showProcessing(data){
+  const fee=calcFee(selectedAmount);
+  const total=selectedAmount+fee;
+  document.getElementById('k-body').innerHTML=`
+    <div class="proc-card">
+      <div style="font-size:48px;margin-bottom:12px">💳</div>
+      <div style="font-family:Syne;font-size:22px;font-weight:700;margin-bottom:4px">Completa el pago</div>
+      <div style="font-size:14px;color:var(--muted)">${currentWristband.holder_name||currentWristband.uid}</div>
+      <div style="font-family:Syne;font-size:44px;font-weight:800;color:var(--a1);margin:16px 0">${fmt(total)}€</div>
+      <div class="summary" style="text-align:left;margin-top:0">
+        <div class="sum-row"><span>Recarga saldo</span><span>${fmt(selectedAmount)}€</span></div>
+        <div class="sum-row"><span>Comisión (${FEE_PERCENT}%)</span><span>${fmt(fee)}€</span></div>
+        <div class="sum-row total"><span>Total a pagar</span><span class="val">${fmt(total)}€</span></div>
+      </div>
+      <div class="proc-status" id="k-proc-status">⏳ Esperando confirmación de pago...</div>
+      <button class="btn btn-p" style="margin-top:12px" onclick="checkPayment()">🔄 Verificar pago</button>
+      <button class="btn btn-danger" style="margin-top:8px" onclick="cancelPayment()">Cancelar</button>
+    </div>
+  `;
+  // Auto-verificar cada 5 segundos
+  checkInterval=setInterval(()=>checkPayment(),5000);
+}
+
+async function checkPayment(){
+  const sumupId=sessionStorage.getItem('k_sumup_id');
+  const wbId=sessionStorage.getItem('k_wb_id');
+  const amount=sessionStorage.getItem('k_amount');
+  const ref=sessionStorage.getItem('k_ref');
+  if(!sumupId||!wbId)return;
+  const el=document.getElementById('k-proc-status');
+  if(el)el.innerHTML='🔄 Verificando...';
+
+  try{
+    const res=await fetch(`${API_URL}/api/rfid/verify-topup?wristband=${wbId}&amount=${amount}&ref=${ref}&sumup_id=${sumupId}`);
+    const data=await res.json();
+    if(data.status==='completed'||data.status==='already_completed'){
+      if(checkInterval){clearInterval(checkInterval);checkInterval=null;}
+      clearSession();
+      showSuccess(parseFloat(amount),data.balance,data.holder_name);
+    }else{
+      if(el)el.innerHTML='⏳ Pago pendiente ('+(data.sumup_status||'procesando')+').<br><span style="font-size:12px;color:var(--muted)">Se verifica automáticamente.</span>';
+    }
+  }catch(e){
+    if(el)el.textContent='⚠️ Error verificando. Reintenta.';
+  }
+}
+
+function cancelPayment(){
+  if(checkInterval){clearInterval(checkInterval);checkInterval=null;}
+  clearSession();
+  toast('Recarga cancelada');
+  showIdle();
+}
+
+function clearSession(){
+  sessionStorage.removeItem('k_sumup_id');
+  sessionStorage.removeItem('k_wb_id');
+  sessionStorage.removeItem('k_amount');
+  sessionStorage.removeItem('k_ref');
+}
+
+// 5. SUCCESS
+function showSuccess(amount,newBalance,name){
+  if(navigator.vibrate)navigator.vibrate([100,50,100]);
+  const div=document.createElement('div');
+  div.className='result-overlay success';
+  div.innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;padding:40px">
+      <div class="result-emoji">✅</div>
+      <div class="result-title" style="color:var(--success)">+${fmt(amount)}€ recargados</div>
+      <div class="result-sub">Nuevo saldo: <strong style="color:var(--a1)">${fmt(newBalance)}€</strong></div>
+      <div style="font-size:14px;color:var(--muted);margin-top:8px">${name||''}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:24px">Volviendo al inicio en 5 segundos...</div>
+    </div>`;
+  document.body.appendChild(div);
+  setTimeout(()=>{div.remove();showIdle();},5000);
+}
+
+// ═══ SCAN HANDLER ═══
+async function onScan(uid){
+  if(navigator.vibrate)navigator.vibrate(100);
+  const{data:wb}=await _sb.from('rfid_wristbands').select('*').eq('uid',uid).single();
+  if(!wb){
+    toast('Pulsera no registrada');
+    return;
+  }
+  if(wb.status!=='active'){
+    toast('Pulsera bloqueada');
+    return;
+  }
+  showBalance(wb);
+}
+
+// ═══ INIT ═══
+(function(){
+  initNFC();
+  showIdle();
+})();
+</script>
+</body>
+</html>
