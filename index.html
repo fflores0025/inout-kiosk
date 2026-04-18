@@ -706,8 +706,27 @@ function scheduleAutoRefresh(){
 // ══════════════════════════════════════════════════════════
 async function initNFC(){
   const el=document.getElementById('k-nfc');
+
+  // ── MODO 1: App Android nativa (bridge Kotlin → JS) ──
+  // La app inyecta window.ANDROID_NFC=true y llama window.onAndroidNFCScan(uid)
+  if(window.ANDROID_KIOSK){
+    // Registrar el callback que la app nativa llamará al detectar un tag
+    window.onAndroidNFCScan = (uid) => {
+      if(uid && uid.length >= 4) onScan(uid.toUpperCase());
+    };
+    nfcSupported = window.ANDROID_NFC === true;
+    if(el){
+      el.textContent = nfcSupported ? 'NFC: Activo (App)' : 'NFC: App sin NFC';
+      el.style.color = nfcSupported ? 'var(--a1)' : 'var(--muted)';
+    }
+    return; // No intentar Web NFC en WebView nativo
+  }
+
+  // ── MODO 2: Web NFC API (Chrome en Android) ──
   if(!('NDEFReader' in window)){
-    nfcSupported=false; if(el) el.textContent='NFC: No disponible'; return;
+    nfcSupported=false;
+    if(el) el.textContent='NFC: No disponible';
+    return;
   }
   nfcSupported=true;
   if(el){ el.textContent='NFC: Activo'; el.style.color='var(--a1)'; }
@@ -717,7 +736,8 @@ async function initNFC(){
     nfcReader.onreading      = ev => onScan(ev.serialNumber.replace(/:/g,'').toUpperCase());
     nfcReader.onreadingerror = ()  => toast('Error leyendo NFC','err');
   }catch(e){
-    nfcSupported=false; if(el) el.textContent='NFC: Sin permiso';
+    nfcSupported=false;
+    if(el) el.textContent='NFC: Sin permiso';
   }
 }
 
