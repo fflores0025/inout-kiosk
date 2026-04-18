@@ -232,7 +232,7 @@
 
   <div class="k-body" id="k-body"></div>
 
-  <div class="k-footer" id="k-footer">InOut Media · Pagos seguros vía SumUp</div>
+  <div class="k-footer" id="k-footer">InOut Media · Pagos seguros vía Stripe</div>
 </div>
 
 <div class="k-status">
@@ -247,9 +247,9 @@
 // ══════════════════════════════════════════════════════════
 const SB_URL    = 'https://raoxkjnwrccoxjcipfpv.supabase.co';
 const SB_KEY    = 'sb_publishable__-K1pC4bOJHRf8JQ__OOzg_jqLxlGla';
-const API_URL   = 'https://inout-api.vercel.app';
-const SUMUP_AK  = 'sup_afk_Yw5nEDC5oRf34ycz09JFqPkR1DLQR5MH';
-const FEE_PCT   = 3.5;
+const API_URL         = 'https://inout-api.vercel.app';
+const STRIPE_PK       = 'pk_test_51TNg3o5UAjvrvcJnygUBrXOkDnOtxhfrTZPUtiAVXan6CzMW0Mjy3rq8vwlojTDiFENLDH3Sjze47siIGe9SBOgQ00dSeVVduC';
+const FEE_PCT         = 3.5;
 const AMOUNTS   = [5, 10, 20, 30, 50, 100];
 const POS_ID    = 'kiosk-01';
 const SUP_PIN   = '1234';          // ← cambiar en producción
@@ -263,7 +263,7 @@ const LANGS = {
   es:{
     flag:'🇪🇸', name:'ES',
     tagline:'Kiosk · Recarga cashless',
-    footer:'InOut Media · Pagos seguros vía SumUp',
+    footer:'InOut Media · Pagos seguros vía Stripe',
     tap_wristband:'Acerca tu pulsera',
     tap_sub:'Para consultar tu saldo o recargar.',
     enter_uid:'Introducir UID manualmente',
@@ -328,7 +328,7 @@ const LANGS = {
   en:{
     flag:'🇬🇧', name:'EN',
     tagline:'Kiosk · Cashless Top-up',
-    footer:'InOut Media · Secure payments via SumUp',
+    footer:'InOut Media · Secure payments via Stripe',
     tap_wristband:'Tap your wristband',
     tap_sub:'To check your balance or top up.',
     enter_uid:'Enter UID manually',
@@ -393,7 +393,7 @@ const LANGS = {
   fr:{
     flag:'🇫🇷', name:'FR',
     tagline:'Kiosk · Rechargement cashless',
-    footer:'InOut Media · Paiements sécurisés via SumUp',
+    footer:'InOut Media · Paiements sécurisés via Stripe',
     tap_wristband:'Approchez votre bracelet',
     tap_sub:'Pour consulter votre solde ou recharger.',
     enter_uid:'Saisir l\'UID manuellement',
@@ -458,7 +458,7 @@ const LANGS = {
   it:{
     flag:'🇮🇹', name:'IT',
     tagline:'Kiosk · Ricarica cashless',
-    footer:'InOut Media · Pagamenti sicuri tramite SumUp',
+    footer:'InOut Media · Pagamenti sicuri tramite Stripe',
     tap_wristband:'Avvicina il tuo braccialetto',
     tap_sub:'Per consultare il saldo o ricaricare.',
     enter_uid:'Inserisci UID manualmente',
@@ -523,7 +523,7 @@ const LANGS = {
   cat:{
     flag:'🏴', name:'CAT',
     tagline:'Kiosk · Recàrrega cashless',
-    footer:'InOut Media · Pagaments segurs via SumUp',
+    footer:'InOut Media · Pagaments segurs via Stripe',
     tap_wristband:'Apropa la teva polsera',
     tap_sub:'Per consultar el teu saldo o recarregar.',
     enter_uid:'Introduir UID manualment',
@@ -673,7 +673,7 @@ async function flushOfflineQueue(){
   localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
   for(const op of pending){
     try{
-      const res = await fetch(API_URL+'/api/rfid/topup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(op)});
+      const res = await fetch(API_URL+'/api/stripe/topup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(op)});
       const d   = await res.json();
       if(!d.error) logEvent('offline_flushed',{uid:op.uid,amount:op.amount});
     }catch(e){ offlineQueue.push(op); }
@@ -967,7 +967,6 @@ async function startPayment(){
       wristband_id:wristband.id, uid:wristband.uid,
       amount:selectedAmt, event_id:wristband.event_id,
       operator:'Kiosco autoservicio '+POS_ID,
-      return_origin:'https://inout-kiosk.vercel.app',
       queued_at:new Date().toISOString()
     });
     localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
@@ -977,107 +976,148 @@ async function startPayment(){
   }
 
   try{
-    const res=await fetch(API_URL+'/api/rfid/topup',{
+    // Crear Stripe Checkout Session en el backend
+    const res=await fetch(API_URL+'/api/stripe/topup',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        wristband_id:wristband.id, uid:wristband.uid,
-        amount:selectedAmt, event_id:wristband.event_id,
-        operator:'Kiosco autoservicio '+POS_ID,
-        return_origin:'https://inout-kiosk.vercel.app',
+        wristband_id: wristband.id,
+        uid:          wristband.uid,
+        amount:       selectedAmt,
+        event_id:     wristband.event_id,
+        operator:     'Kiosco autoservicio '+POS_ID,
+        success_url:  'https://inout-kiosk.vercel.app?stripe=success&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url:   'https://inout-kiosk.vercel.app?stripe=cancel',
       })
     });
     const data=await res.json();
     if(data.error){ toast('Error: '+data.error,'err'); showSummary(); return; }
 
-    sessionStorage.setItem('k_sumup_id', data.sumup_checkout_id||'');
+    // Guardar session_id para verificar después
+    sessionStorage.setItem('k_stripe_session', data.session_id||'');
     sessionStorage.setItem('k_wb_id',    wristband.id);
     sessionStorage.setItem('k_amount',   String(selectedAmt));
     sessionStorage.setItem('k_ref',      data.reference||'');
 
-    showProcessing();
+    // Mostrar pantalla de procesamiento con iframe de Stripe embebido
+    showStripeCheckout(data.checkout_url, data.session_id);
 
-    if(/Android/i.test(navigator.userAgent)&&data.reference){
-      const total=+(selectedAmt+calcFee(selectedAmt)).toFixed(2);
-      window.location.href='sumupmerchant://pay/1.0'
-        +'?affiliate-key='+SUMUP_AK+'&app-id=com.inoutmedia.valid'
-        +'&total='+total+'&currency=EUR'
-        +'&title='+encodeURIComponent('Recarga '+(wristband.holder_name||wristband.uid))
-        +'&foreign-tx-id='+data.reference
-        +'&skip-screen-success=true'
-        +'&callback='+encodeURIComponent('https://inout-kiosk.vercel.app');
-    } else if(data.checkout_url){
-      window.open(data.checkout_url,'_blank','noopener');
-    }
-
-    checkInterval=setInterval(checkPayment,5000);
   }catch(err){
+    console.error(err);
     toast('Error de conexión. Inténtalo de nuevo.','err'); showSummary();
   }
 }
 
 // ══════════════════════════════════════════════════════════
-//  SCREEN 5 — PROCESANDO
+//  SCREEN 5 — STRIPE CHECKOUT EMBEBIDO
 // ══════════════════════════════════════════════════════════
-function showProcessing(){
+function showStripeCheckout(checkoutUrl, sessionId){
   const fee=calcFee(selectedAmt), total=selectedAmt+fee;
   const body=document.getElementById('k-body');
   body.dataset.screen='processing'; resetIdleTimer();
+
   body.innerHTML=`
-    <div class="proc-card">
-      <div style="font-size:50px;margin-bottom:10px">💳</div>
-      <div style="font-family:Syne;font-size:19px;font-weight:700">${T('complete_payment')}</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:3px">${wristband.holder_name||wristband.uid}</div>
-      <div style="font-family:Syne;font-size:44px;font-weight:800;color:var(--a1);margin:12px 0;letter-spacing:-1px">${fmt(total)} €</div>
-      <div class="summary" style="text-align:left;margin-top:0">
-        <div class="sum-row"><span>${T('recharge')}</span><span class="val">${fmt(selectedAmt)} €</span></div>
-        <div class="sum-row"><span>${T('commission')} (${FEE_PCT}%)</span><span class="val" style="color:var(--muted)">${fmt(calcFee(selectedAmt))} €</span></div>
-        <div class="sum-row total"><span>${T('total')}</span><span class="val">${fmt(total)} €</span></div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:12px">
+      <!-- Resumen encima del iframe -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm)">
+        <div>
+          <div style="font-size:12px;color:var(--muted)">${wristband.holder_name||wristband.uid}</div>
+          <div style="font-size:11px;color:var(--muted)">Recarga: ${fmt(selectedAmt)}€ + comisión: ${fmt(fee)}€</div>
+        </div>
+        <div style="font-family:Syne;font-size:24px;font-weight:800;color:var(--a1)">${fmt(total)} €</div>
       </div>
-      <div class="proc-status" id="k-status">⏳ ${T('pending')}…</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
-        <button class="btn btn-g" style="font-size:14px;padding:13px" onclick="checkPayment()">${T('verify_now')}</button>
-        <button class="btn btn-danger" onclick="cancelPayment()">${T('cancel_payment')}</button>
+
+      <!-- Iframe de Stripe Checkout -->
+      <div style="background:#fff;border-radius:var(--r);overflow:hidden;min-height:420px;position:relative">
+        <iframe
+          id="stripe-iframe"
+          src="${checkoutUrl}"
+          style="width:100%;height:520px;border:none;display:block"
+          allow="payment *"
+        ></iframe>
       </div>
+
+      <div class="proc-status" id="k-status" style="text-align:center">
+        💳 Introduce los datos de tu tarjeta en el formulario
+      </div>
+
+      <button class="btn btn-danger" onclick="cancelPayment()">${T('cancel_payment')}</button>
     </div>
   `;
+
+  // Polling para detectar cuando el pago se complete
+  // Stripe redirigirá a success_url con session_id en la URL
+  checkInterval = setInterval(checkStripePayment, 4000);
+
+  // También escuchar si la URL cambia (redirect de Stripe)
+  window.addEventListener('message', onStripeMessage);
 }
 
-async function checkPayment(){
-  const sumupId=sessionStorage.getItem('k_sumup_id');
-  const wbId   =sessionStorage.getItem('k_wb_id');
-  const amount =sessionStorage.getItem('k_amount');
-  const ref    =sessionStorage.getItem('k_ref');
-  if(!wbId) return;
-  const el=document.getElementById('k-status');
-  if(el) el.innerHTML=T('verifying');
+function onStripeMessage(event){
+  // Stripe puede enviar mensajes desde el iframe cuando el pago completa
+  if(event.data && (event.data.type === 'payment_intent.succeeded' ||
+                    event.data === 'stripe:checkout:complete')){
+    clearInterval(checkInterval);
+    window.removeEventListener('message', onStripeMessage);
+    checkStripePayment();
+  }
+}
+
+// Verificar el estado de la sesión de Stripe
+async function checkStripePayment(){
+  const sessionId = sessionStorage.getItem('k_stripe_session');
+  const wbId      = sessionStorage.getItem('k_wb_id');
+  const amount    = sessionStorage.getItem('k_amount');
+  const ref       = sessionStorage.getItem('k_ref');
+  if(!sessionId||!wbId) return;
+
+  const el = document.getElementById('k-status');
+  if(el) el.innerHTML = T('verifying');
+
   try{
-    const res =await fetch(`${API_URL}/api/rfid/verify-topup?wristband=${wbId}&amount=${amount}&ref=${ref}&sumup_id=${sumupId}`);
-    const data=await res.json();
-    if(data.status==='completed'||data.status==='already_completed'){
+    const res  = await fetch(`${API_URL}/api/stripe/verify-topup?session_id=${sessionId}&wristband=${wbId}&amount=${amount}&ref=${ref}`);
+    const data = await res.json();
+
+    if(data.status==='paid'||data.status==='completed'){
       clearInterval(checkInterval); checkInterval=null;
+      window.removeEventListener('message', onStripeMessage);
       clearSession();
-      // Update stats
       const a=parseFloat(amount);
       todayStats.topups++; todayStats.amount+=a;
       todayStats.comm+=calcFee(a); todayStats.last=new Date().toISOString();
       saveStats();
-      logEvent('payment_success',{uid:wristband?.uid,amount:a,new_balance:data.balance});
+      logEvent('payment_success',{uid:wristband?.uid,amount:a,new_balance:data.balance,provider:'stripe'});
       showSuccess(a, data.balance, data.holder_name);
+    } else if(data.status==='expired'||data.status==='canceled'){
+      clearInterval(checkInterval); checkInterval=null;
+      clearSession();
+      toast('Pago cancelado o expirado.','warn');
+      showSummary();
     } else {
-      if(el) el.innerHTML=`${T('pending')} — <em>${data.sumup_status||'procesando'}</em><br><span style="font-size:11px;color:var(--muted)">${T('auto_check')}</span>`;
+      // pending — seguir esperando
+      if(el) el.innerHTML=`⏳ Esperando confirmación… <span style="font-size:11px;color:var(--muted)">${T('auto_check')}</span>`;
     }
   }catch(e){
     if(el) el.textContent='⚠️ Error al verificar. Reintenta.';
   }
 }
 
+// Alias para compatibilidad con botón "Verificar ahora"
+async function checkPayment(){ await checkStripePayment(); }
+
+function showProcessing(){
+  // Fallback legacy — redirige a checkout si hay sesión activa
+  const sessionId=sessionStorage.getItem('k_stripe_session');
+  if(sessionId) checkStripePayment();
+}
+
 function cancelPayment(){
   clearInterval(checkInterval); checkInterval=null;
+  window.removeEventListener('message', onStripeMessage);
   clearSession(); toast(T('cancel'),'warn'); showIdle();
 }
 
 function clearSession(){
-  ['k_sumup_id','k_wb_id','k_amount','k_ref'].forEach(k=>sessionStorage.removeItem(k));
+  ['k_stripe_session','k_wb_id','k_amount','k_ref'].forEach(k=>sessionStorage.removeItem(k));
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1335,13 +1375,39 @@ function promptOOS(){
 //  RESUME tras deep link Android
 // ══════════════════════════════════════════════════════════
 async function checkResume(){
-  const wbId=sessionStorage.getItem('k_wb_id');
-  const amount=sessionStorage.getItem('k_amount');
-  if(!wbId||!amount) return false;
+  // Stripe: ¿volvemos de una redirección de Checkout?
+  const params = new URLSearchParams(window.location.search);
+  const stripeResult  = params.get('stripe');
+  const stripeSession = params.get('session_id') || sessionStorage.getItem('k_stripe_session');
+
+  if(stripeResult === 'success' && stripeSession){
+    window.history.replaceState({}, '', window.location.pathname);
+    const wbId  = sessionStorage.getItem('k_wb_id');
+    const amount= sessionStorage.getItem('k_amount');
+    if(wbId && amount){
+      const {data:wb}=await _sb.from('rfid_wristbands').select('*').eq('id',wbId).single();
+      if(wb){ wristband=wb; selectedAmt=parseFloat(amount); }
+    }
+    sessionStorage.setItem('k_stripe_session', stripeSession);
+    await checkStripePayment();
+    return true;
+  }
+
+  if(stripeResult === 'cancel'){
+    window.history.replaceState({}, '', window.location.pathname);
+    clearSession(); toast('Pago cancelado.','warn'); return false;
+  }
+
+  // ¿Hay sesión pendiente de una carga anterior?
+  const wbId  = sessionStorage.getItem('k_wb_id');
+  const amount= sessionStorage.getItem('k_amount');
+  if(!wbId||!amount||!stripeSession) return false;
+
   const {data:wb}=await _sb.from('rfid_wristbands').select('*').eq('id',wbId).single();
   if(!wb){ clearSession(); return false; }
   wristband=wb; selectedAmt=parseFloat(amount);
-  showProcessing(); checkInterval=setInterval(checkPayment,5000);
+  await checkStripePayment();
+  checkInterval=setInterval(checkStripePayment,4000);
   return true;
 }
 
