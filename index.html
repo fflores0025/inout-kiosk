@@ -9,7 +9,6 @@
   <title>InOut · Recarga tu pulsera</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <!-- QR generator -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -21,8 +20,6 @@
       --r:16px;--r-sm:12px;
     }
     html,body{height:100%;font-family:'DM Sans',sans-serif;font-size:16px;color:var(--txt);background:var(--bg);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-font-smoothing:antialiased;}
-
-    /* ── LAYOUT ── */
     .kiosk{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:580px;margin:0 auto;padding:14px 20px;position:relative;}
     .kiosk::before{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:400px;height:300px;background:radial-gradient(ellipse,rgba(200,255,0,.055) 0%,transparent 70%);pointer-events:none;z-index:0;}
     .k-header{text-align:center;padding:10px 0 8px;flex-shrink:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;}
@@ -33,8 +30,6 @@
     .k-body::-webkit-scrollbar{width:3px;}
     .k-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
     .k-footer{text-align:center;padding:6px 0;flex-shrink:0;font-size:10px;color:var(--muted);position:relative;z-index:1;letter-spacing:.3px;}
-
-    /* ── NFC RING ── */
     .nfc-ring{width:170px;height:170px;border-radius:50%;border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;transition:all .35s;margin:0 auto;position:relative;}
     .nfc-ring::before,.nfc-ring::after{content:'';position:absolute;border-radius:50%;border:1.5px solid currentColor;opacity:0;}
     .nfc-ring::before{width:200px;height:200px;}
@@ -48,39 +43,23 @@
     @keyframes ring-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.25);}50%{box-shadow:0 0 0 18px rgba(0,212,255,0);}}
     @keyframes ring-expand{0%{opacity:.35;transform:scale(.85);}100%{opacity:0;transform:scale(1.12);}}
     .nfc-emoji{font-size:60px;line-height:1;display:block;text-align:center;}
-
-    /* ── TYPOGRAPHY ── */
     .k-title{font-family:'Syne',sans-serif;font-weight:700;font-size:21px;text-align:center;margin-top:18px;line-height:1.2;}
     .k-sub{color:var(--muted);font-size:14px;text-align:center;margin-top:6px;line-height:1.5;}
-
-    /* ── BALANCE CARD ── */
     .bal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;width:100%;text-align:center;}
     .bal-name{font-size:16px;font-weight:500;margin-bottom:3px;}
     .bal-uid{font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:.5px;}
     .bal-amount{font-family:'Syne',sans-serif;font-size:50px;font-weight:800;color:var(--a1);margin:10px 0 4px;letter-spacing:-1.5px;line-height:1;}
     .bal-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
-
-    /* ── TOPUP GRID ── */
     .topup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%;margin-top:14px;}
     .topup-btn{padding:18px 6px;border-radius:var(--r-sm);background:var(--card);border:2px solid var(--border);text-align:center;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;}
     .topup-btn:active{transform:scale(.94);}
     .topup-btn.selected{border-color:var(--a1);background:rgba(200,255,0,.07);box-shadow:0 0 0 3px rgba(200,255,0,.12);}
     .topup-btn .t-amount{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--a1);}
     .topup-btn .t-fee{font-size:10px;color:var(--muted);margin-top:3px;}
-
-    /* ── CUSTOM AMOUNT INPUT ── */
-    .custom-input{
-      width:100%;padding:14px 16px;border-radius:var(--r-sm);
-      background:var(--surf);border:2px solid var(--border);
-      color:var(--txt);font-size:22px;font-family:'Syne',sans-serif;font-weight:700;
-      text-align:center;outline:none;transition:border-color .15s;
-      -webkit-text-fill-color:var(--txt);margin-top:10px;
-    }
+    .custom-input{width:100%;padding:14px 16px;border-radius:var(--r-sm);background:var(--surf);border:2px solid var(--border);color:var(--txt);font-size:22px;font-family:'Syne',sans-serif;font-weight:700;text-align:center;outline:none;transition:border-color .15s;-webkit-text-fill-color:var(--txt);margin-top:10px;}
     .custom-input:focus{border-color:var(--a3);}
     .custom-input.has-value{border-color:var(--a1);}
     .custom-input::placeholder{color:var(--muted);font-weight:400;font-size:16px;}
-
-    /* ── BUTTONS ── */
     .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:16px 24px;border-radius:var(--r-sm);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;transition:opacity .12s,transform .1s;width:100%;min-height:52px;}
     .btn:active{transform:scale(.96);opacity:.8;}
     .btn:disabled{opacity:.4;pointer-events:none;}
@@ -88,28 +67,15 @@
     .btn-g{background:transparent;color:var(--muted);border:1px solid var(--border);}
     .btn-danger{background:rgba(255,23,68,.1);color:var(--danger);border:1px solid rgba(255,23,68,.2);}
     .btn-sup{background:rgba(0,212,255,.08);color:var(--a3);border:1px solid rgba(0,212,255,.2);}
-
-    /* ── SUMMARY ── */
     .summary{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:16px;width:100%;margin-top:12px;}
     .sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:14px;color:var(--muted);}
     .sum-row .val{color:var(--txt);}
     .sum-row.total{border-top:1px solid var(--border);padding-top:13px;margin-top:4px;font-size:15px;font-weight:600;color:var(--txt);}
     .sum-row.total .val{color:var(--a1);font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
-
-    /* ── PROCESSING ── */
     .proc-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:26px 20px;width:100%;text-align:center;}
     .proc-status{padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;margin:12px 0;font-size:13px;color:var(--warn);line-height:1.5;}
-
-    /* ── OFFLINE BADGE ── */
-    .offline-badge{
-      display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);
-      background:rgba(255,171,0,.15);border:1px solid rgba(255,171,0,.4);
-      color:var(--warn);border-radius:100px;padding:6px 16px;font-size:12px;
-      z-index:200;white-space:nowrap;
-    }
+    .offline-badge{display:none;position:fixed;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,171,0,.15);border:1px solid rgba(255,171,0,.4);color:var(--warn);border-radius:100px;padding:6px 16px;font-size:12px;z-index:200;white-space:nowrap;}
     .offline-badge.visible{display:block;}
-
-    /* ── HISTORY ── */
     .tx-list{width:100%;display:flex;flex-direction:column;gap:7px;margin-top:10px;}
     .tx-item{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);}
     .tx-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
@@ -121,16 +87,12 @@
     .tx-amount{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;flex-shrink:0;}
     .tx-amount.in{color:var(--a1);}
     .tx-amount.out{color:var(--a2);}
-
-    /* ── SUPERVISOR PANEL ── */
     .sup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:12px;}
     .sup-stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:16px;text-align:center;}
     .sup-stat .s-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--a1);}
     .sup-stat .s-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:1px;}
     .sup-stat.wide{grid-column:1/-1;}
     .sup-stat.wide .s-val{font-size:36px;}
-
-    /* ── SUCCESS OVERLAY ── */
     .success-overlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,40,10,.93);backdrop-filter:blur(6px);animation:fadeIn .25s ease;padding:24px;}
     .success-box{text-align:center;width:100%;max-width:360px;}
     .success-emoji{font-size:72px;display:block;margin-bottom:14px;}
@@ -140,32 +102,22 @@
     .qr-wrap{margin:16px auto 0;width:160px;height:160px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:8px;}
     .qr-wrap canvas{width:100%!important;height:100%!important;}
     .success-count{font-size:13px;color:var(--muted);margin-top:16px;}
-
-    /* ── OOS SCREEN ── */
     .oos-screen{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);text-align:center;padding:40px;gap:16px;}
     .oos-emoji{font-size:80px;}
     .oos-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--a2);}
     .oos-msg{font-size:16px;color:var(--muted);max-width:340px;line-height:1.6;}
-
-    /* ── LANG PICKER ── */
     .lang-row{display:flex;gap:6px;}
     .lang-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
     .lang-btn.active{border-color:var(--a1);color:var(--a1);background:rgba(200,255,0,.08);}
-
-    /* ── TOAST ── */
     #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border);border-radius:100px;padding:12px 22px;font-size:13px;z-index:1000;transition:transform .3s cubic-bezier(.4,0,.2,1);white-space:nowrap;pointer-events:none;}
     #toast.show{transform:translateX(-50%) translateY(0);}
     #toast.warn{border-color:rgba(255,171,0,.4);color:var(--warn);}
     #toast.err{border-color:rgba(255,23,68,.4);color:var(--danger);}
     #toast.ok{border-color:rgba(0,230,118,.4);color:var(--success);}
-
-    /* ── STATUS BAR ── */
     .k-status{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:5px 16px 7px;font-size:10px;color:var(--muted);background:linear-gradient(to top,var(--bg) 60%,transparent);z-index:10;pointer-events:none;}
     .k-status .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--a1);margin-right:5px;animation:blink 2s ease-in-out infinite;}
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
     @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-
-    /* ── PIN PAD ── */
     .pin-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:24px;}
     .pin-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px;width:100%;max-width:340px;text-align:center;}
     .pin-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;}
@@ -175,7 +127,9 @@
     .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;}
     .pin-key{padding:18px;border-radius:var(--r-sm);background:var(--surf);border:1px solid var(--border);font-family:'Syne',sans-serif;font-size:22px;font-weight:700;cursor:pointer;transition:background .1s,transform .1s;}
     .pin-key:active{background:rgba(200,255,0,.1);transform:scale(.93);}
-
+    /* Verifying screen spinner */
+    .spin{display:inline-block;width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--a3);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
     @media(max-height:680px){
       .nfc-ring{width:130px;height:130px;}
       .nfc-ring::before{width:154px;height:154px;}
@@ -187,11 +141,9 @@
   </style>
 </head>
 <body>
-
 <div id="toast"></div>
 <div class="offline-badge" id="offline-badge">⚡ Sin conexión — modo offline</div>
 
-<!-- OOS overlay (fuera de servicio) — oculto por defecto -->
 <div class="oos-screen" id="oos-screen" style="display:none">
   <div class="oos-emoji">🚫</div>
   <div class="oos-title" id="oos-title">Fuera de servicio</div>
@@ -199,7 +151,6 @@
   <div style="font-size:12px;color:var(--muted);margin-top:8px" id="oos-footer"></div>
 </div>
 
-<!-- PIN overlay -->
 <div class="pin-overlay" id="pin-overlay" style="display:none">
   <div class="pin-box">
     <div class="pin-title" id="pin-title">Acceso supervisor</div>
@@ -211,9 +162,18 @@
       <div class="pin-dot" id="pd3"></div>
     </div>
     <div class="pin-pad">
-      ${[1,2,3,4,5,6,7,8,9,'','0','⌫'].map(k=>`
-        <div class="pin-key" onclick="pinKey('${k}')">${k}</div>
-      `).join('')}
+      <div class="pin-key" onclick="pinKey('1')">1</div>
+      <div class="pin-key" onclick="pinKey('2')">2</div>
+      <div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div>
+      <div class="pin-key" onclick="pinKey('5')">5</div>
+      <div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div>
+      <div class="pin-key" onclick="pinKey('8')">8</div>
+      <div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key" onclick="pinKey('')" style="opacity:.2"></div>
+      <div class="pin-key" onclick="pinKey('0')">0</div>
+      <div class="pin-key" onclick="pinKey('⌫')">⌫</div>
     </div>
     <button class="btn btn-g" style="margin-top:14px;font-size:13px;padding:10px" onclick="closePIN()">Cancelar</button>
   </div>
@@ -221,22 +181,18 @@
 
 <div class="kiosk">
   <div class="k-header">
-    <!-- Lang picker izquierda -->
     <div class="lang-row" id="lang-row"></div>
     <div class="k-logo">in<span class="hi">out</span><small id="logo-sub">Kiosk · Recarga cashless</small></div>
-    <!-- Supervisor acceso derecha (toque largo oculto) -->
     <div style="width:80px;display:flex;justify-content:flex-end">
       <div id="sup-tap" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:18px" title="Supervisor" ontouchstart="supTapStart()" ontouchend="supTapEnd()" onmousedown="supTapStart()" onmouseup="supTapEnd()">⚙️</div>
     </div>
   </div>
-
   <div class="k-body" id="k-body"></div>
-
   <div class="k-footer" id="k-footer">InOut Media · Pagos seguros vía Stripe</div>
 </div>
 
 <div class="k-status">
-  <span><span class="dot"></span>InOut Kiosk v3.0</span>
+  <span><span class="dot"></span>InOut Kiosk v3.1</span>
   <span id="k-time">—</span>
   <span id="k-nfc">NFC: —</span>
 </div>
@@ -245,396 +201,75 @@
 // ══════════════════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════════════════
-const SB_URL    = 'https://raoxkjnwrccoxjcipfpv.supabase.co';
-const SB_KEY    = 'sb_publishable__-K1pC4bOJHRf8JQ__OOzg_jqLxlGla';
+const SB_URL          = 'https://raoxkjnwrccoxjcipfpv.supabase.co';
+const SB_KEY          = 'sb_publishable__-K1pC4bOJHRf8JQ__OOzg_jqLxlGla';
 const API_URL         = 'https://inout-api.vercel.app';
 const STRIPE_PK       = 'pk_test_51TNg3o5UAjvrvcJnygUBrXOkDnOtxhfrTZPUtiAVXan6CzMW0Mjy3rq8vwlojTDiFENLDH3Sjze47siIGe9SBOgQ00dSeVVduC';
 const FEE_PCT         = 3.5;
-const AMOUNTS   = [5, 10, 20, 30, 50, 100];
-const POS_ID    = 'kiosk-01';
-const SUP_PIN   = '1234';          // ← cambiar en producción
-const AUTO_REFRESH_HOUR = 4;       // hora de auto-actualización (4:00 AM)
-const MAX_BALANCE = 200;           // saldo máximo permitido por pulsera
+const AMOUNTS         = [5, 10, 20, 30, 50, 100];
+const POS_ID          = 'kiosk-01';
+const SUP_PIN         = '1234';
+const AUTO_REFRESH_HOUR = 4;
+const MAX_BALANCE     = 200;
 
 // ══════════════════════════════════════════════════════════
-//  I18N — TRADUCCIONES
+//  I18N
 // ══════════════════════════════════════════════════════════
 const LANGS = {
-  es:{
-    flag:'🇪🇸', name:'ES',
-    tagline:'Kiosk · Recarga cashless',
-    footer:'InOut Media · Pagos seguros vía Stripe',
-    tap_wristband:'Acerca tu pulsera',
-    tap_sub:'Para consultar tu saldo o recargar.',
-    enter_uid:'Introducir UID manualmente',
-    check_bal:'Consultar saldo sin recargar →',
-    nfc_hint:'Acerca tu pulsera para ver el saldo.',
-    uid_title:'Introducir UID',
-    uid_hint:'Encuéntralo en el reverso de tu pulsera o en tu ticket.',
-    uid_ph:'Ej: A3B21F8C',
-    verify:'Verificar pulsera',
-    back:'← Volver',
-    balance_label:'Saldo disponible',
-    how_much:'¿Cuánto quieres recargar?',
-    pays:'Pagas',
-    select_amount:'Selecciona un importe',
-    pay_btn:'Pagar {total} € · Recargar {amt} €',
-    custom_ph:'Otro importe (€)',
-    history:'Ver historial',
-    start:'← Inicio',
-    summary:'Resumen del pago',
-    wristband:'Pulsera',
-    holder:'Titular',
-    recharge:'Recarga',
-    commission:'Comisión',
-    total:'Total a pagar',
-    confirm:'Confirmar y pagar con tarjeta',
-    change_amount:'← Cambiar importe',
-    cancel:'Cancelar',
-    complete_payment:'Completa el pago',
-    verifying:'🔄 Verificando…',
-    pending:'⏳ Pago pendiente',
-    auto_check:'Se verifica automáticamente cada 5 seg.',
-    verify_now:'🔄 Verificar ahora',
-    cancel_payment:'Cancelar pago',
-    success_title:'¡Recarga completada!',
-    new_balance:'Nuevo saldo:',
-    back_soon:'Volviendo al inicio en {n} seg…',
-    back_now:'Volver ahora',
-    history_title:'Historial',
-    current_balance:'Saldo actual',
-    back_profile:'← Volver al perfil',
-    no_txs:'Sin movimientos registrados.',
-    recharge_cashless:'Recarga cashless',
-    consumption:'Consumo',
-    offline_queue:'Cola offline: {n} operación(es) pendiente(s)',
-    supervisor:'Panel Supervisor',
-    today_topups:'Recargas hoy',
-    today_amount:'Importe total',
-    today_comm:'Comisiones',
-    avg_topup:'Ticket medio',
-    offline_ops:'Ops. offline pendientes',
-    last_topup:'Última recarga',
-    never:'Nunca',
-    oos_toggle:'Activar/Desactivar fuera de servicio',
-    oos_on:'🚫 Activar fuera de servicio',
-    oos_off:'✅ Desactivar fuera de servicio',
-    receipt_sent:'✅ Recibo enviado',
-    receipt_error:'No se pudo enviar el recibo',
-    no_email:'Sin email asociado a esta pulsera',
-    suspect_warn:'⚠️ Pulsera con actividad sospechosa',
-    balance_limit:'Saldo máximo de {max}€ alcanzado',
-  },
-  en:{
-    flag:'🇬🇧', name:'EN',
-    tagline:'Kiosk · Cashless Top-up',
-    footer:'InOut Media · Secure payments via Stripe',
-    tap_wristband:'Tap your wristband',
-    tap_sub:'To check your balance or top up.',
-    enter_uid:'Enter UID manually',
-    check_bal:'Check balance without top-up →',
-    nfc_hint:'Tap your wristband to see your balance.',
-    uid_title:'Enter UID',
-    uid_hint:'Find it on the back of your wristband or your ticket.',
-    uid_ph:'e.g. A3B21F8C',
-    verify:'Verify wristband',
-    back:'← Back',
-    balance_label:'Available balance',
-    how_much:'How much do you want to top up?',
-    pays:'You pay',
-    select_amount:'Select an amount',
-    pay_btn:'Pay {total} € · Top up {amt} €',
-    custom_ph:'Other amount (€)',
-    history:'View history',
-    start:'← Home',
-    summary:'Payment summary',
-    wristband:'Wristband',
-    holder:'Name',
-    recharge:'Top-up',
-    commission:'Fee',
-    total:'Total to pay',
-    confirm:'Confirm and pay by card',
-    change_amount:'← Change amount',
-    cancel:'Cancel',
-    complete_payment:'Complete payment',
-    verifying:'🔄 Verifying…',
-    pending:'⏳ Payment pending',
-    auto_check:'Verified automatically every 5 sec.',
-    verify_now:'🔄 Verify now',
-    cancel_payment:'Cancel payment',
-    success_title:'Top-up complete!',
-    new_balance:'New balance:',
-    back_soon:'Back to home in {n} sec…',
-    back_now:'Back now',
-    history_title:'History',
-    current_balance:'Current balance',
-    back_profile:'← Back to profile',
-    no_txs:'No transactions recorded.',
-    recharge_cashless:'Cashless top-up',
-    consumption:'Purchase',
-    offline_queue:'Offline queue: {n} pending operation(s)',
-    supervisor:'Supervisor Panel',
-    today_topups:"Today's top-ups",
-    today_amount:'Total amount',
-    today_comm:'Commissions',
-    avg_topup:'Avg. top-up',
-    offline_ops:'Pending offline ops',
-    last_topup:'Last top-up',
-    never:'Never',
-    oos_toggle:'Toggle out of service',
-    oos_on:'🚫 Set out of service',
-    oos_off:'✅ Back in service',
-    receipt_sent:'✅ Receipt sent',
-    receipt_error:'Could not send receipt',
-    no_email:'No email linked to this wristband',
-    suspect_warn:'⚠️ Suspicious wristband activity',
-    balance_limit:'Maximum balance of {max}€ reached',
-  },
-  fr:{
-    flag:'🇫🇷', name:'FR',
-    tagline:'Kiosk · Rechargement cashless',
-    footer:'InOut Media · Paiements sécurisés via Stripe',
-    tap_wristband:'Approchez votre bracelet',
-    tap_sub:'Pour consulter votre solde ou recharger.',
-    enter_uid:'Saisir l\'UID manuellement',
-    check_bal:'Consulter le solde sans recharger →',
-    nfc_hint:'Approchez votre bracelet pour voir le solde.',
-    uid_title:'Saisir l\'UID',
-    uid_hint:'Trouvez-le au dos de votre bracelet ou sur votre billet.',
-    uid_ph:'Ex: A3B21F8C',
-    verify:'Vérifier le bracelet',
-    back:'← Retour',
-    balance_label:'Solde disponible',
-    how_much:'Combien voulez-vous recharger?',
-    pays:'Vous payez',
-    select_amount:'Sélectionnez un montant',
-    pay_btn:'Payer {total} € · Recharger {amt} €',
-    custom_ph:'Autre montant (€)',
-    history:'Voir l\'historique',
-    start:'← Accueil',
-    summary:'Récapitulatif du paiement',
-    wristband:'Bracelet',
-    holder:'Titulaire',
-    recharge:'Rechargement',
-    commission:'Commission',
-    total:'Total à payer',
-    confirm:'Confirmer et payer par carte',
-    change_amount:'← Changer le montant',
-    cancel:'Annuler',
-    complete_payment:'Effectuez le paiement',
-    verifying:'🔄 Vérification…',
-    pending:'⏳ Paiement en attente',
-    auto_check:'Vérifié automatiquement toutes les 5 sec.',
-    verify_now:'🔄 Vérifier maintenant',
-    cancel_payment:'Annuler le paiement',
-    success_title:'Rechargement effectué!',
-    new_balance:'Nouveau solde:',
-    back_soon:'Retour à l\'accueil dans {n} sec…',
-    back_now:'Retour maintenant',
-    history_title:'Historique',
-    current_balance:'Solde actuel',
-    back_profile:'← Retour au profil',
-    no_txs:'Aucune transaction enregistrée.',
-    recharge_cashless:'Rechargement cashless',
-    consumption:'Consommation',
-    offline_queue:'File hors ligne: {n} opération(s) en attente',
-    supervisor:'Panneau superviseur',
-    today_topups:"Rechargements aujourd'hui",
-    today_amount:'Montant total',
-    today_comm:'Commissions',
-    avg_topup:'Ticket moyen',
-    offline_ops:'Ops. hors ligne en attente',
-    last_topup:'Dernier rechargement',
-    never:'Jamais',
-    oos_toggle:'Activer/désactiver hors service',
-    oos_on:'🚫 Mettre hors service',
-    oos_off:'✅ Remettre en service',
-    receipt_sent:'✅ Reçu envoyé',
-    receipt_error:'Impossible d\'envoyer le reçu',
-    no_email:'Pas d\'email associé à ce bracelet',
-    suspect_warn:'⚠️ Activité suspecte détectée',
-    balance_limit:'Solde maximum de {max}€ atteint',
-  },
-  it:{
-    flag:'🇮🇹', name:'IT',
-    tagline:'Kiosk · Ricarica cashless',
-    footer:'InOut Media · Pagamenti sicuri tramite Stripe',
-    tap_wristband:'Avvicina il tuo braccialetto',
-    tap_sub:'Per consultare il saldo o ricaricare.',
-    enter_uid:'Inserisci UID manualmente',
-    check_bal:'Controlla saldo senza ricaricare →',
-    nfc_hint:'Avvicina il braccialetto per vedere il saldo.',
-    uid_title:'Inserisci UID',
-    uid_hint:'Trovalo sul retro del braccialetto o sul biglietto.',
-    uid_ph:'Es: A3B21F8C',
-    verify:'Verifica braccialetto',
-    back:'← Indietro',
-    balance_label:'Saldo disponibile',
-    how_much:'Quanto vuoi ricaricare?',
-    pays:'Paghi',
-    select_amount:'Seleziona un importo',
-    pay_btn:'Paga {total} € · Ricarica {amt} €',
-    custom_ph:'Altro importo (€)',
-    history:'Vedi cronologia',
-    start:'← Inizio',
-    summary:'Riepilogo pagamento',
-    wristband:'Braccialetto',
-    holder:'Intestatario',
-    recharge:'Ricarica',
-    commission:'Commissione',
-    total:'Totale da pagare',
-    confirm:'Conferma e paga con carta',
-    change_amount:'← Cambia importo',
-    cancel:'Annulla',
-    complete_payment:'Completa il pagamento',
-    verifying:'🔄 Verifica in corso…',
-    pending:'⏳ Pagamento in attesa',
-    auto_check:'Verificato automaticamente ogni 5 sec.',
-    verify_now:'🔄 Verifica ora',
-    cancel_payment:'Annulla pagamento',
-    success_title:'Ricarica completata!',
-    new_balance:'Nuovo saldo:',
-    back_soon:'Ritorno alla home in {n} sec…',
-    back_now:'Torna ora',
-    history_title:'Cronologia',
-    current_balance:'Saldo attuale',
-    back_profile:'← Torna al profilo',
-    no_txs:'Nessuna transazione registrata.',
-    recharge_cashless:'Ricarica cashless',
-    consumption:'Consumo',
-    offline_queue:'Coda offline: {n} operazione/i in attesa',
-    supervisor:'Pannello supervisore',
-    today_topups:'Ricariche oggi',
-    today_amount:'Importo totale',
-    today_comm:'Commissioni',
-    avg_topup:'Ticket medio',
-    offline_ops:'Op. offline in attesa',
-    last_topup:'Ultima ricarica',
-    never:'Mai',
-    oos_toggle:'Attiva/disattiva fuori servizio',
-    oos_on:'🚫 Metti fuori servizio',
-    oos_off:'✅ Rimetti in servizio',
-    receipt_sent:'✅ Ricevuta inviata',
-    receipt_error:'Impossibile inviare la ricevuta',
-    no_email:'Nessuna email associata a questo braccialetto',
-    suspect_warn:'⚠️ Attività sospetta rilevata',
-    balance_limit:'Saldo massimo di {max}€ raggiunto',
-  },
-  cat:{
-    flag:'🏴', name:'CAT',
-    tagline:'Kiosk · Recàrrega cashless',
-    footer:'InOut Media · Pagaments segurs via Stripe',
-    tap_wristband:'Apropa la teva polsera',
-    tap_sub:'Per consultar el teu saldo o recarregar.',
-    enter_uid:'Introduir UID manualment',
-    check_bal:'Consultar saldo sense recarregar →',
-    nfc_hint:'Apropa la polsera per veure el saldo.',
-    uid_title:'Introduir UID',
-    uid_hint:'Troba-ho al revers de la polsera o al teu tiquet.',
-    uid_ph:'Ex: A3B21F8C',
-    verify:'Verificar polsera',
-    back:'← Tornar',
-    balance_label:'Saldo disponible',
-    how_much:'Quant vols recarregar?',
-    pays:'Pagues',
-    select_amount:'Selecciona un import',
-    pay_btn:'Pagar {total} € · Recarregar {amt} €',
-    custom_ph:'Altre import (€)',
-    history:'Veure historial',
-    start:'← Inici',
-    summary:'Resum del pagament',
-    wristband:'Polsera',
-    holder:'Titular',
-    recharge:'Recàrrega',
-    commission:'Comissió',
-    total:'Total a pagar',
-    confirm:'Confirmar i pagar amb targeta',
-    change_amount:'← Canviar import',
-    cancel:'Cancel·lar',
-    complete_payment:'Completa el pagament',
-    verifying:'🔄 Verificant…',
-    pending:'⏳ Pagament pendent',
-    auto_check:'Es verifica automàticament cada 5 seg.',
-    verify_now:'🔄 Verificar ara',
-    cancel_payment:'Cancel·lar pagament',
-    success_title:'Recàrrega completada!',
-    new_balance:'Nou saldo:',
-    back_soon:'Tornant a l\'inici en {n} seg…',
-    back_now:'Tornar ara',
-    history_title:'Historial',
-    current_balance:'Saldo actual',
-    back_profile:'← Tornar al perfil',
-    no_txs:'Sense moviments registrats.',
-    recharge_cashless:'Recàrrega cashless',
-    consumption:'Consum',
-    offline_queue:'Cua offline: {n} operació/ns pendents',
-    supervisor:'Panell supervisor',
-    today_topups:'Recàrregues avui',
-    today_amount:'Import total',
-    today_comm:'Comissions',
-    avg_topup:'Tiquet mitjà',
-    offline_ops:'Ops. offline pendents',
-    last_topup:'Última recàrrega',
-    never:'Mai',
-    oos_toggle:'Activar/desactivar fora de servei',
-    oos_on:'🚫 Posar fora de servei',
-    oos_off:'✅ Tornar al servei',
-    receipt_sent:'✅ Rebut enviat',
-    receipt_error:'No s\'ha pogut enviar el rebut',
-    no_email:'Sense email associat a aquesta polsera',
-    suspect_warn:'⚠️ Activitat sospitosa detectada',
-    balance_limit:'Saldo màxim de {max}€ assolit',
-  }
+  es:{flag:'🇪🇸',name:'ES',tagline:'Kiosk · Recarga cashless',footer:'InOut Media · Pagos seguros vía Stripe',tap_wristband:'Acerca tu pulsera',tap_sub:'Para consultar tu saldo o recargar.',enter_uid:'Introducir UID manualmente',check_bal:'Consultar saldo sin recargar →',nfc_hint:'Acerca tu pulsera para ver el saldo.',uid_title:'Introducir UID',uid_hint:'Encuéntralo en el reverso de tu pulsera o en tu ticket.',uid_ph:'Ej: A3B21F8C',verify:'Verificar pulsera',back:'← Volver',balance_label:'Saldo disponible',how_much:'¿Cuánto quieres recargar?',pays:'Pagas',select_amount:'Selecciona un importe',pay_btn:'Pagar {total} € · Recargar {amt} €',custom_ph:'Otro importe (€)',history:'Ver historial',start:'← Inicio',summary:'Resumen del pago',wristband:'Pulsera',holder:'Titular',recharge:'Recarga',commission:'Comisión',total:'Total a pagar',confirm:'Confirmar y pagar con tarjeta',change_amount:'← Cambiar importe',cancel:'Cancelar',complete_payment:'Verificando pago…',verifying:'🔄 Verificando…',pending:'⏳ Pago pendiente',auto_check:'Se verifica automáticamente cada 5 seg.',verify_now:'🔄 Verificar ahora',cancel_payment:'Cancelar pago',success_title:'¡Recarga completada!',new_balance:'Nuevo saldo:',back_soon:'Volviendo al inicio en {n} seg…',back_now:'Volver ahora',history_title:'Historial',current_balance:'Saldo actual',back_profile:'← Volver al perfil',no_txs:'Sin movimientos registrados.',recharge_cashless:'Recarga cashless',consumption:'Consumo',offline_queue:'Cola offline: {n} operación(es) pendiente(s)',supervisor:'Panel Supervisor',today_topups:'Recargas hoy',today_amount:'Importe total',today_comm:'Comisiones',avg_topup:'Ticket medio',offline_ops:'Ops. offline pendientes',last_topup:'Última recarga',never:'Nunca',oos_toggle:'Activar/Desactivar fuera de servicio',oos_on:'🚫 Activar fuera de servicio',oos_off:'✅ Desactivar fuera de servicio',receipt_sent:'✅ Recibo enviado',receipt_error:'No se pudo enviar el recibo',no_email:'Sin email asociado a esta pulsera',suspect_warn:'⚠️ Pulsera con actividad sospechosa',balance_limit:'Saldo máximo de {max}€ alcanzado'},
+  en:{flag:'🇬🇧',name:'EN',tagline:'Kiosk · Cashless Top-up',footer:'InOut Media · Secure payments via Stripe',tap_wristband:'Tap your wristband',tap_sub:'To check your balance or top up.',enter_uid:'Enter UID manually',check_bal:'Check balance without top-up →',nfc_hint:'Tap your wristband to see your balance.',uid_title:'Enter UID',uid_hint:'Find it on the back of your wristband or your ticket.',uid_ph:'e.g. A3B21F8C',verify:'Verify wristband',back:'← Back',balance_label:'Available balance',how_much:'How much do you want to top up?',pays:'You pay',select_amount:'Select an amount',pay_btn:'Pay {total} € · Top up {amt} €',custom_ph:'Other amount (€)',history:'View history',start:'← Home',summary:'Payment summary',wristband:'Wristband',holder:'Name',recharge:'Top-up',commission:'Fee',total:'Total to pay',confirm:'Confirm and pay by card',change_amount:'← Change amount',cancel:'Cancel',complete_payment:'Verifying payment…',verifying:'🔄 Verifying…',pending:'⏳ Payment pending',auto_check:'Verified automatically every 5 sec.',verify_now:'🔄 Verify now',cancel_payment:'Cancel payment',success_title:'Top-up complete!',new_balance:'New balance:',back_soon:'Back to home in {n} sec…',back_now:'Back now',history_title:'History',current_balance:'Current balance',back_profile:'← Back to profile',no_txs:'No transactions recorded.',recharge_cashless:'Cashless top-up',consumption:'Purchase',offline_queue:'Offline queue: {n} pending operation(s)',supervisor:'Supervisor Panel',today_topups:"Today's top-ups",today_amount:'Total amount',today_comm:'Commissions',avg_topup:'Avg. top-up',offline_ops:'Pending offline ops',last_topup:'Last top-up',never:'Never',oos_toggle:'Toggle out of service',oos_on:'🚫 Set out of service',oos_off:'✅ Back in service',receipt_sent:'✅ Receipt sent',receipt_error:'Could not send receipt',no_email:'No email linked to this wristband',suspect_warn:'⚠️ Suspicious wristband activity',balance_limit:'Maximum balance of {max}€ reached'},
+  fr:{flag:'🇫🇷',name:'FR',tagline:'Kiosk · Rechargement cashless',footer:'InOut Media · Paiements sécurisés via Stripe',tap_wristband:'Approchez votre bracelet',tap_sub:'Pour consulter votre solde ou recharger.',enter_uid:"Saisir l'UID manuellement",check_bal:'Consulter le solde sans recharger →',nfc_hint:'Approchez votre bracelet pour voir le solde.',uid_title:"Saisir l'UID",uid_hint:'Trouvez-le au dos de votre bracelet ou sur votre billet.',uid_ph:'Ex: A3B21F8C',verify:'Vérifier le bracelet',back:'← Retour',balance_label:'Solde disponible',how_much:'Combien voulez-vous recharger?',pays:'Vous payez',select_amount:'Sélectionnez un montant',pay_btn:'Payer {total} € · Recharger {amt} €',custom_ph:'Autre montant (€)',history:"Voir l'historique",start:'← Accueil',summary:'Récapitulatif du paiement',wristband:'Bracelet',holder:'Titulaire',recharge:'Rechargement',commission:'Commission',total:'Total à payer',confirm:'Confirmer et payer par carte',change_amount:'← Changer le montant',cancel:'Annuler',complete_payment:'Vérification du paiement…',verifying:'🔄 Vérification…',pending:'⏳ Paiement en attente',auto_check:'Vérifié automatiquement toutes les 5 sec.',verify_now:'🔄 Vérifier maintenant',cancel_payment:'Annuler le paiement',success_title:'Rechargement effectué!',new_balance:'Nouveau solde:',back_soon:"Retour à l'accueil dans {n} sec…",back_now:'Retour maintenant',history_title:'Historique',current_balance:'Solde actuel',back_profile:'← Retour au profil',no_txs:'Aucune transaction enregistrée.',recharge_cashless:'Rechargement cashless',consumption:'Consommation',offline_queue:'File hors ligne: {n} opération(s) en attente',supervisor:'Panneau superviseur',today_topups:"Rechargements aujourd'hui",today_amount:'Montant total',today_comm:'Commissions',avg_topup:'Ticket moyen',offline_ops:'Ops. hors ligne en attente',last_topup:'Dernier rechargement',never:'Jamais',oos_toggle:'Activer/désactiver hors service',oos_on:'🚫 Mettre hors service',oos_off:'✅ Remettre en service',receipt_sent:'✅ Reçu envoyé',receipt_error:"Impossible d'envoyer le reçu",no_email:'Pas d\'email associé à ce bracelet',suspect_warn:'⚠️ Activité suspecte détectée',balance_limit:'Solde maximum de {max}€ atteint'},
+  it:{flag:'🇮🇹',name:'IT',tagline:'Kiosk · Ricarica cashless',footer:'InOut Media · Pagamenti sicuri tramite Stripe',tap_wristband:'Avvicina il tuo braccialetto',tap_sub:'Per consultare il saldo o ricaricare.',enter_uid:'Inserisci UID manualmente',check_bal:'Controlla saldo senza ricaricare →',nfc_hint:'Avvicina il braccialetto per vedere il saldo.',uid_title:'Inserisci UID',uid_hint:'Trovalo sul retro del braccialetto o sul biglietto.',uid_ph:'Es: A3B21F8C',verify:'Verifica braccialetto',back:'← Indietro',balance_label:'Saldo disponibile',how_much:'Quanto vuoi ricaricare?',pays:'Paghi',select_amount:'Seleziona un importo',pay_btn:'Paga {total} € · Ricarica {amt} €',custom_ph:'Altro importo (€)',history:'Vedi cronologia',start:'← Inizio',summary:'Riepilogo pagamento',wristband:'Braccialetto',holder:'Intestatario',recharge:'Ricarica',commission:'Commissione',total:'Totale da pagare',confirm:'Conferma e paga con carta',change_amount:'← Cambia importo',cancel:'Annulla',complete_payment:'Verifica pagamento…',verifying:'🔄 Verifica in corso…',pending:'⏳ Pagamento in attesa',auto_check:'Verificato automaticamente ogni 5 sec.',verify_now:'🔄 Verifica ora',cancel_payment:'Annulla pagamento',success_title:'Ricarica completata!',new_balance:'Nuovo saldo:',back_soon:'Ritorno alla home in {n} sec…',back_now:'Torna ora',history_title:'Cronologia',current_balance:'Saldo attuale',back_profile:'← Torna al profilo',no_txs:'Nessuna transazione registrata.',recharge_cashless:'Ricarica cashless',consumption:'Consumo',offline_queue:'Coda offline: {n} operazione/i in attesa',supervisor:'Pannello supervisore',today_topups:'Ricariche oggi',today_amount:'Importo totale',today_comm:'Commissioni',avg_topup:'Ticket medio',offline_ops:'Op. offline in attesa',last_topup:'Ultima ricarica',never:'Mai',oos_toggle:'Attiva/disattiva fuori servizio',oos_on:'🚫 Metti fuori servizio',oos_off:'✅ Rimetti in servizio',receipt_sent:'✅ Ricevuta inviata',receipt_error:'Impossibile inviare la ricevuta',no_email:'Nessuna email associata a questo braccialetto',suspect_warn:'⚠️ Attività sospetta rilevata',balance_limit:'Saldo massimo di {max}€ raggiunto'},
+  cat:{flag:'🏴',name:'CAT',tagline:'Kiosk · Recàrrega cashless',footer:'InOut Media · Pagaments segurs via Stripe',tap_wristband:'Apropa la teva polsera',tap_sub:'Per consultar el teu saldo o recarregar.',enter_uid:'Introduir UID manualment',check_bal:'Consultar saldo sense recarregar →',nfc_hint:'Apropa la polsera per veure el saldo.',uid_title:'Introduir UID',uid_hint:"Troba-ho al revers de la polsera o al teu tiquet.",uid_ph:'Ex: A3B21F8C',verify:'Verificar polsera',back:'← Tornar',balance_label:'Saldo disponible',how_much:'Quant vols recarregar?',pays:'Pagues',select_amount:'Selecciona un import',pay_btn:'Pagar {total} € · Recarregar {amt} €',custom_ph:'Altre import (€)',history:'Veure historial',start:'← Inici',summary:'Resum del pagament',wristband:'Polsera',holder:'Titular',recharge:'Recàrrega',commission:'Comissió',total:'Total a pagar',confirm:'Confirmar i pagar amb targeta',change_amount:'← Canviar import',cancel:'Cancel·lar',complete_payment:'Verificant pagament…',verifying:'🔄 Verificant…',pending:'⏳ Pagament pendent',auto_check:'Es verifica automàticament cada 5 seg.',verify_now:'🔄 Verificar ara',cancel_payment:'Cancel·lar pagament',success_title:'Recàrrega completada!',new_balance:'Nou saldo:',back_soon:"Tornant a l'inici en {n} seg…",back_now:'Tornar ara',history_title:'Historial',current_balance:'Saldo actual',back_profile:'← Tornar al perfil',no_txs:'Sense moviments registrats.',recharge_cashless:'Recàrrega cashless',consumption:'Consum',offline_queue:'Cua offline: {n} operació/ns pendents',supervisor:'Panell supervisor',today_topups:'Recàrregues avui',today_amount:'Import total',today_comm:'Comissions',avg_topup:'Tiquet mitjà',offline_ops:'Ops. offline pendents',last_topup:'Última recàrrega',never:'Mai',oos_toggle:'Activar/desactivar fora de servei',oos_on:'🚫 Posar fora de servei',oos_off:'✅ Tornar al servei',receipt_sent:'✅ Rebut enviat',receipt_error:"No s'ha pogut enviar el rebut",no_email:'Sense email associat a aquesta polsera',suspect_warn:'⚠️ Activitat sospitosa detectada',balance_limit:'Saldo màxim de {max}€ assolit'}
 };
 
 // ══════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════
-const _sb       = supabase.createClient(SB_URL, SB_KEY);
-let lang        = localStorage.getItem('k_lang') || 'es';
-let nfcSupported= false;
-let nfcReader   = null;
-let wristband   = null;
-let selectedAmt = 0;
+const _sb        = supabase.createClient(SB_URL, SB_KEY);
+let lang         = localStorage.getItem('k_lang') || 'es';
+let nfcSupported = false;
+let nfcReader    = null;
+let wristband    = null;
+let selectedAmt  = 0;
 let checkInterval= null;
-let idleTimer   = null;
-let oosActive   = JSON.parse(localStorage.getItem('k_oos') || 'false');
-let oosMsg      = localStorage.getItem('k_oos_msg') || '';
-let offlineQueue= JSON.parse(localStorage.getItem('k_offline_q') || '[]');
-let supTapTimer = null;
-let pinBuffer   = '';
-let pinCallback = null;
-let isOnline    = navigator.onLine;
-// Stats in-memory for supervisor
-let todayStats  = JSON.parse(sessionStorage.getItem('k_stats') || '{"topups":0,"amount":0,"comm":0,"last":null}');
+let idleTimer    = null;
+let oosActive    = JSON.parse(localStorage.getItem('k_oos') || 'false');
+let oosMsg       = localStorage.getItem('k_oos_msg') || '';
+let offlineQueue = JSON.parse(localStorage.getItem('k_offline_q') || '[]');
+let supTapTimer  = null;
+let pinBuffer    = '';
+let pinCallback  = null;
+let isOnline     = navigator.onLine;
+let todayStats   = JSON.parse(sessionStorage.getItem('k_stats') || '{"topups":0,"amount":0,"comm":0,"last":null}');
 
 // ══════════════════════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════════════════════
 const T = (key, vars={}) => {
   let s = (LANGS[lang]||LANGS.es)[key] || key;
-  Object.entries(vars).forEach(([k,v])=>{ s=s.replace('{'+k+'}',v); });
+  Object.entries(vars).forEach(([k,v]) => { s = s.replace('{'+k+'}', v); });
   return s;
 };
 const fmt = n => (n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
-const calcFee = a => Math.round(a * FEE_PCT * 100) / 10000;  // round to cent
+const calcFee = a => Math.round(a * FEE_PCT * 100) / 10000;
 const fmtDate = iso => iso
   ? new Date(iso).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})
   : '—';
 
-let _toastTimer=null;
+let _toastTimer = null;
 function toast(msg, type='', ms=2800){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='show'+(type?' '+type:'');
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (type ? ' '+type : '');
   clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(()=>t.classList.remove('show'),ms);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
 
 function resetIdleTimer(){
   clearTimeout(idleTimer);
-  const body=document.getElementById('k-body');
-  if(!body||body.dataset.screen==='idle') return;
-  idleTimer=setTimeout(()=>{ toast(T('cancel'),'warn'); showIdle(); }, 120_000);
+  const body = document.getElementById('k-body');
+  if(!body || body.dataset.screen === 'idle') return;
+  idleTimer = setTimeout(() => { toast(T('cancel'), 'warn'); showIdle(); }, 120_000);
 }
 
 function saveStats(){ sessionStorage.setItem('k_stats', JSON.stringify(todayStats)); }
@@ -643,39 +278,37 @@ function saveStats(){ sessionStorage.setItem('k_stats', JSON.stringify(todayStat
 //  LANG
 // ══════════════════════════════════════════════════════════
 function setLang(l){
-  lang=l; localStorage.setItem('k_lang',l);
+  lang = l; localStorage.setItem('k_lang', l);
   document.getElementById('logo-sub').textContent = T('tagline');
   document.getElementById('k-footer').textContent = T('footer');
   renderLangRow();
-  // Re-render current screen if needed
   const screen = document.getElementById('k-body').dataset.screen;
-  if(screen==='idle') showIdle();
+  if(screen === 'idle') showIdle();
 }
 
 function renderLangRow(){
   const row = document.getElementById('lang-row');
-  row.innerHTML = Object.entries(LANGS).map(([k,v])=>
+  row.innerHTML = Object.entries(LANGS).map(([k,v]) =>
     `<button class="lang-btn ${lang===k?'active':''}" onclick="setLang('${k}')">${v.flag} ${v.name}</button>`
   ).join('');
 }
 
 // ══════════════════════════════════════════════════════════
-//  OFFLINE / ONLINE
+//  OFFLINE
 // ══════════════════════════════════════════════════════════
-window.addEventListener('online',  ()=>{ isOnline=true;  document.getElementById('offline-badge').classList.remove('visible'); flushOfflineQueue(); });
-window.addEventListener('offline', ()=>{ isOnline=false; document.getElementById('offline-badge').classList.add('visible'); });
+window.addEventListener('online',  () => { isOnline = true;  document.getElementById('offline-badge').classList.remove('visible'); flushOfflineQueue(); });
+window.addEventListener('offline', () => { isOnline = false; document.getElementById('offline-badge').classList.add('visible'); });
 
 async function flushOfflineQueue(){
   if(!offlineQueue.length) return;
-  toast(`Sincronizando ${offlineQueue.length} op(s) offline…`,'', 4000);
+  toast(`Sincronizando ${offlineQueue.length} op(s) offline…`, '', 4000);
   const pending = [...offlineQueue];
-  offlineQueue = [];
-  localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
+  offlineQueue = []; localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
   for(const op of pending){
     try{
       const res = await fetch(API_URL+'/api/stripe/topup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(op)});
-      const d   = await res.json();
-      if(!d.error) logEvent('offline_flushed',{uid:op.uid,amount:op.amount});
+      const d = await res.json();
+      if(!d.error) logEvent('offline_flushed', {uid:op.uid, amount:op.amount});
     }catch(e){ offlineQueue.push(op); }
   }
   localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
@@ -685,59 +318,44 @@ async function flushOfflineQueue(){
 //  CLOCK + AUTO-REFRESH
 // ══════════════════════════════════════════════════════════
 function startClock(){
-  const tick=()=>{
-    const el=document.getElementById('k-time');
-    if(el) el.textContent=new Date().toLocaleTimeString('es-ES');
-  };
-  tick(); setInterval(tick,1000);
+  const tick = () => { const el = document.getElementById('k-time'); if(el) el.textContent = new Date().toLocaleTimeString('es-ES'); };
+  tick(); setInterval(tick, 1000);
   scheduleAutoRefresh();
 }
 
 function scheduleAutoRefresh(){
-  const now    = new Date();
-  const target = new Date(now);
-  target.setHours(AUTO_REFRESH_HOUR,0,0,0);
-  if(now>=target) target.setDate(target.getDate()+1);
-  setTimeout(()=>{ logEvent('auto_refresh',{}); location.reload(); }, target-now);
+  const now = new Date(), target = new Date(now);
+  target.setHours(AUTO_REFRESH_HOUR, 0, 0, 0);
+  if(now >= target) target.setDate(target.getDate() + 1);
+  setTimeout(() => { logEvent('auto_refresh', {}); location.reload(); }, target - now);
 }
 
 // ══════════════════════════════════════════════════════════
 //  NFC
 // ══════════════════════════════════════════════════════════
 async function initNFC(){
-  const el=document.getElementById('k-nfc');
-
-  // ── MODO 1: App Android nativa (bridge Kotlin → JS) ──
-  // La app inyecta window.ANDROID_NFC=true y llama window.onAndroidNFCScan(uid)
+  const el = document.getElementById('k-nfc');
   if(window.ANDROID_KIOSK){
-    // Registrar el callback que la app nativa llamará al detectar un tag
-    window.onAndroidNFCScan = (uid) => {
-      if(uid && uid.length >= 4) onScan(uid.toUpperCase());
-    };
+    window.onAndroidNFCScan = (uid) => { if(uid && uid.length >= 4) onScan(uid.toUpperCase()); };
     nfcSupported = window.ANDROID_NFC === true;
-    if(el){
-      el.textContent = nfcSupported ? 'NFC: Activo (App)' : 'NFC: App sin NFC';
-      el.style.color = nfcSupported ? 'var(--a1)' : 'var(--muted)';
-    }
-    return; // No intentar Web NFC en WebView nativo
-  }
-
-  // ── MODO 2: Web NFC API (Chrome en Android) ──
-  if(!('NDEFReader' in window)){
-    nfcSupported=false;
-    if(el) el.textContent='NFC: No disponible';
+    if(el){ el.textContent = nfcSupported ? 'NFC: Activo (App)' : 'NFC: App sin NFC'; el.style.color = nfcSupported ? 'var(--a1)' : 'var(--muted)'; }
     return;
   }
-  nfcSupported=true;
-  if(el){ el.textContent='NFC: Activo'; el.style.color='var(--a1)'; }
+  if(!('NDEFReader' in window)){
+    nfcSupported = false;
+    if(el) el.textContent = 'NFC: No disponible';
+    return;
+  }
+  nfcSupported = true;
+  if(el){ el.textContent = 'NFC: Activo'; el.style.color = 'var(--a1)'; }
   try{
-    nfcReader=new NDEFReader();
+    nfcReader = new NDEFReader();
     await nfcReader.scan();
-    nfcReader.onreading      = ev => onScan(ev.serialNumber.replace(/:/g,'').toUpperCase());
-    nfcReader.onreadingerror = ()  => toast('Error leyendo NFC','err');
+    nfcReader.onreading = ev => onScan(ev.serialNumber.replace(/:/g,'').toUpperCase());
+    nfcReader.onreadingerror = () => toast('Error leyendo NFC', 'err');
   }catch(e){
-    nfcSupported=false;
-    if(el) el.textContent='NFC: Sin permiso';
+    nfcSupported = false;
+    if(el) el.textContent = 'NFC: Sin permiso';
   }
 }
 
@@ -747,38 +365,30 @@ async function initNFC(){
 async function onScan(uid){
   if(oosActive) return;
   if(navigator.vibrate) navigator.vibrate(100);
-  const body=document.getElementById('k-body');
-  if(body.dataset.screen==='balance' && wristband?.uid===uid) return;
-  const ring=document.querySelector('.nfc-ring');
-  if(ring) ring.className='nfc-ring found';
+  const body = document.getElementById('k-body');
+  if(body.dataset.screen === 'balance' && wristband?.uid === uid) return;
+  const ring = document.querySelector('.nfc-ring');
+  if(ring) ring.className = 'nfc-ring found';
 
-  const {data:wb,error}=await _sb.from('rfid_wristbands').select('*').eq('uid',uid).single();
-  if(error||!wb){
-    if(ring) ring.className='nfc-ring err-ring';
-    toast('Pulsera no registrada: '+uid,'err'); setTimeout(()=>showIdle(),2200); return;
+  const {data:wb, error} = await _sb.from('rfid_wristbands').select('*').eq('uid', uid).maybeSingle();
+  if(error || !wb){
+    if(ring) ring.className = 'nfc-ring err-ring';
+    toast('Pulsera no registrada: '+uid, 'err'); setTimeout(() => showIdle(), 2200); return;
   }
-  if(wb.status!=='active'){
-    if(ring) ring.className='nfc-ring err-ring';
-    toast('Pulsera bloqueada o inactiva','err'); setTimeout(()=>showIdle(),2200); return;
+  if(wb.status !== 'active'){
+    if(ring) ring.className = 'nfc-ring err-ring';
+    toast('Pulsera bloqueada o inactiva', 'err'); setTimeout(() => showIdle(), 2200); return;
   }
-
-  // Detección de actividad sospechosa
   await checkSuspiciousActivity(wb);
-
-  wristband=wb; showBalance(wb);
+  wristband = wb; showBalance(wb);
 }
 
 async function checkSuspiciousActivity(wb){
   try{
-    const since = new Date(Date.now()-60*60*1000).toISOString(); // última 1h
-    const {data:txs}=await _sb.from('rfid_transactions')
-      .select('amount').eq('wristband_id',wb.id)
-      .gte('created_at',since).gt('amount',0);
-    const totalLastHour = (txs||[]).reduce((s,t)=>s+t.amount,0);
-    if(totalLastHour >= 150){
-      toast(T('suspect_warn'),'warn',5000);
-      logEvent('suspect_activity',{uid:wb.uid,amount_1h:totalLastHour});
-    }
+    const since = new Date(Date.now() - 60*60*1000).toISOString();
+    const {data:txs} = await _sb.from('rfid_transactions').select('amount').eq('wristband_id', wb.id).gte('created_at', since).gt('amount', 0);
+    const totalLastHour = (txs||[]).reduce((s,t) => s+t.amount, 0);
+    if(totalLastHour >= 150){ toast(T('suspect_warn'), 'warn', 5000); logEvent('suspect_activity', {uid:wb.uid, amount_1h:totalLastHour}); }
   }catch(e){}
 }
 
@@ -786,9 +396,9 @@ async function checkSuspiciousActivity(wb){
 //  MANUAL UID
 // ══════════════════════════════════════════════════════════
 function manualUID(){
-  const body=document.getElementById('k-body');
-  body.dataset.screen='manual'; resetIdleTimer();
-  body.innerHTML=`
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'manual'; resetIdleTimer();
+  body.innerHTML = `
     <div style="width:100%;max-width:380px;text-align:center">
       <div style="font-family:Syne;font-size:20px;font-weight:700;margin-bottom:8px">${T('uid_title')}</div>
       <div style="font-size:13px;color:var(--muted);margin-bottom:18px">${T('uid_hint')}</div>
@@ -800,20 +410,19 @@ function manualUID(){
       />
       <button class="btn btn-p" style="margin-top:13px" onclick="submitManualUID()">${T('verify')}</button>
       <button class="btn btn-g" style="margin-top:8px" onclick="showIdle()">${T('back')}</button>
-    </div>
-  `;
-  setTimeout(()=>document.getElementById('uid-in')?.focus(),80);
+    </div>`;
+  setTimeout(() => document.getElementById('uid-in')?.focus(), 80);
 }
 
 function submitManualUID(){
-  const raw=(document.getElementById('uid-in')?.value||'').trim();
-  const uid=raw.replace(/[^a-fA-F0-9]/g,'').toUpperCase();
-  if(uid.length<4){ toast(T('uid_ph'),'warn'); return; }
+  const raw = (document.getElementById('uid-in')?.value || '').trim();
+  const uid = raw.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
+  if(uid.length < 4){ toast(T('uid_ph'), 'warn'); return; }
   onScan(uid);
 }
 
 function consultarSaldo(){
-  if(nfcSupported){ toast(T('nfc_hint'),'',3500); }
+  if(nfcSupported){ toast(T('nfc_hint'), '', 3500); }
   else manualUID();
 }
 
@@ -822,12 +431,12 @@ function consultarSaldo(){
 // ══════════════════════════════════════════════════════════
 function showIdle(){
   if(oosActive){ showOOS(); return; }
-  wristband=null; selectedAmt=0;
-  clearInterval(checkInterval); checkInterval=null;
+  wristband = null; selectedAmt = 0;
+  clearInterval(checkInterval); checkInterval = null;
   clearTimeout(idleTimer);
-  const body=document.getElementById('k-body');
-  body.dataset.screen='idle';
-  body.innerHTML=`
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'idle';
+  body.innerHTML = `
     <div class="nfc-ring scanning"><span class="nfc-emoji">👋</span></div>
     <div class="k-title">${T('tap_wristband')}</div>
     <div class="k-sub">${T('tap_sub')}</div>
@@ -839,101 +448,75 @@ function showIdle(){
       <button class="btn btn-g" style="font-size:13px;min-height:44px;padding:11px" onclick="consultarSaldo()">${T('check_bal')}</button>
     </div>
     ${offlineQueue.length ? `<div style="margin-top:14px;font-size:12px;color:var(--warn);text-align:center">⚡ ${T('offline_queue',{n:offlineQueue.length})}</div>` : ''}
-    ${!nfcSupported ? '<div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">NFC no disponible — usa el UID manual.</div>' : ''}
-  `;
+    ${!nfcSupported ? '<div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">NFC no disponible — usa el UID manual.</div>' : ''}`;
 }
 
 // ══════════════════════════════════════════════════════════
-//  SCREEN 2 — BALANCE + importe
+//  SCREEN 2 — BALANCE
 // ══════════════════════════════════════════════════════════
 function showBalance(wb){
-  selectedAmt=0;
-  const body=document.getElementById('k-body');
-  body.dataset.screen='balance'; resetIdleTimer();
-
-  body.innerHTML=`
+  selectedAmt = 0;
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'balance'; resetIdleTimer();
+  body.innerHTML = `
     <div class="bal-card">
       <div class="bal-name">${wb.holder_name||'— Sin nombre —'}</div>
       <div class="bal-uid">${wb.uid}</div>
       <div class="bal-amount">${fmt(wb.balance)}<span style="font-size:22px;font-weight:400;color:rgba(200,255,0,.5)"> €</span></div>
       <div class="bal-label">${T('balance_label')}</div>
     </div>
-
-    <div style="font-family:Syne;font-weight:700;font-size:16px;margin-top:18px;align-self:flex-start">
-      ${T('how_much')}
-    </div>
+    <div style="font-family:Syne;font-weight:700;font-size:16px;margin-top:18px;align-self:flex-start">${T('how_much')}</div>
     <div class="topup-grid">
-      ${AMOUNTS.map(a=>`
+      ${AMOUNTS.map(a => `
         <div class="topup-btn" id="tb-${a}" onclick="selectAmount(${a})">
           <div class="t-amount">${a}€</div>
           <div class="t-fee">${T('pays')} ${fmt(a+calcFee(a))}€</div>
-        </div>
-      `).join('')}
+        </div>`).join('')}
     </div>
-
-    <!-- Importe personalizado -->
-    <input
-      id="custom-amt" type="number" min="1" max="500" step="0.5"
-      class="custom-input"
-      placeholder="${T('custom_ph')}"
-      oninput="selectCustomAmount(this)"
-    />
-
+    <input id="custom-amt" type="number" min="1" max="500" step="0.5" class="custom-input" placeholder="${T('custom_ph')}" oninput="selectCustomAmount(this)"/>
     <div style="width:100%;margin-top:12px;display:flex;flex-direction:column;gap:9px">
       <button class="btn btn-p" id="pay-btn" onclick="showSummary()" disabled>${T('select_amount')}</button>
       <button class="btn btn-g" style="font-size:13px;min-height:44px;padding:11px" onclick="showHistory()">${T('history')}</button>
       <button class="btn btn-g" style="font-size:13px;min-height:44px;padding:11px" onclick="showIdle()">${T('start')}</button>
-    </div>
-  `;
+    </div>`;
 }
 
 function selectAmount(a){
-  selectedAmt=a;
-  document.querySelectorAll('.topup-btn').forEach(b=>b.classList.remove('selected'));
+  selectedAmt = a;
+  document.querySelectorAll('.topup-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('tb-'+a)?.classList.add('selected');
-  const ci=document.getElementById('custom-amt');
-  if(ci){ ci.value=''; ci.classList.remove('has-value'); }
+  const ci = document.getElementById('custom-amt');
+  if(ci){ ci.value = ''; ci.classList.remove('has-value'); }
   updatePayBtn();
 }
 
 function selectCustomAmount(input){
-  const v=parseFloat(input.value);
-  document.querySelectorAll('.topup-btn').forEach(b=>b.classList.remove('selected'));
-  if(!isNaN(v)&&v>=1&&v<=500){
-    selectedAmt=v;
-    input.classList.add('has-value');
-  } else {
-    selectedAmt=0;
-    input.classList.remove('has-value');
-  }
+  const v = parseFloat(input.value);
+  document.querySelectorAll('.topup-btn').forEach(b => b.classList.remove('selected'));
+  if(!isNaN(v) && v >= 1 && v <= 500){ selectedAmt = v; input.classList.add('has-value'); }
+  else{ selectedAmt = 0; input.classList.remove('has-value'); }
   updatePayBtn();
 }
 
 function updatePayBtn(){
-  const btn=document.getElementById('pay-btn');
-  if(!btn) return;
-  if(selectedAmt>0){
-    const total=selectedAmt+calcFee(selectedAmt);
-    btn.disabled=false;
-    btn.innerHTML=T('pay_btn',{total:fmt(total),amt:fmt(selectedAmt)});
-  } else {
-    btn.disabled=true; btn.textContent=T('select_amount');
-  }
+  const btn = document.getElementById('pay-btn'); if(!btn) return;
+  if(selectedAmt > 0){
+    const total = selectedAmt + calcFee(selectedAmt);
+    btn.disabled = false;
+    btn.innerHTML = T('pay_btn', {total:fmt(total), amt:fmt(selectedAmt)});
+  } else { btn.disabled = true; btn.textContent = T('select_amount'); }
 }
 
 // ══════════════════════════════════════════════════════════
 //  SCREEN 3 — RESUMEN
 // ══════════════════════════════════════════════════════════
 function showSummary(){
-  if(!selectedAmt||!wristband) return;
-  // Verificar límite de saldo
-  if((wristband.balance||0)+selectedAmt > MAX_BALANCE){
-    toast(T('balance_limit',{max:MAX_BALANCE}),'warn',4000); return;
-  }
-  const fee=calcFee(selectedAmt), total=selectedAmt+fee;
-  const body=document.getElementById('k-body');
-  body.dataset.screen='summary'; resetIdleTimer();
-  body.innerHTML=`
+  if(!selectedAmt || !wristband) return;
+  if((wristband.balance||0) + selectedAmt > MAX_BALANCE){ toast(T('balance_limit',{max:MAX_BALANCE}), 'warn', 4000); return; }
+  const fee = calcFee(selectedAmt), total = selectedAmt + fee;
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'summary'; resetIdleTimer();
+  body.innerHTML = `
     <div style="font-family:Syne;font-size:19px;font-weight:700;text-align:center;width:100%">${T('summary')}</div>
     <div class="summary">
       <div class="sum-row"><span>${T('wristband')}</span><span class="val" style="font-family:monospace;font-size:12px">${wristband.uid}</span></div>
@@ -949,75 +532,60 @@ function showSummary(){
       </button>
       <button class="btn btn-g" onclick="showBalance(wristband)">${T('change_amount')}</button>
       <button class="btn btn-g" style="font-size:13px;min-height:44px;padding:11px" onclick="showIdle()">${T('cancel')}</button>
-    </div>
-  `;
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════
 //  SCREEN 4 — PAGO
 // ══════════════════════════════════════════════════════════
 async function startPayment(){
-  if(!wristband||selectedAmt<=0) return;
-  const confBtn=document.querySelector('#k-body .btn-p');
-  if(confBtn){ confBtn.disabled=true; confBtn.textContent='Procesando…'; }
+  if(!wristband || selectedAmt <= 0) return;
+  const confBtn = document.querySelector('#k-body .btn-p');
+  if(confBtn){ confBtn.disabled = true; confBtn.textContent = 'Procesando…'; }
 
-  // Si offline → encolar
   if(!isOnline){
-    offlineQueue.push({
-      wristband_id:wristband.id, uid:wristband.uid,
-      amount:selectedAmt, event_id:wristband.event_id,
-      operator:'Kiosco autoservicio '+POS_ID,
-      queued_at:new Date().toISOString()
-    });
+    offlineQueue.push({wristband_id:wristband.id, uid:wristband.uid, amount:selectedAmt, event_id:wristband.event_id, operator:'Kiosco autoservicio '+POS_ID, queued_at:new Date().toISOString()});
     localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
-    logEvent('queued_offline',{uid:wristband.uid,amount:selectedAmt});
-    toast(T('offline_queue',{n:offlineQueue.length}),'warn',4000);
+    logEvent('queued_offline', {uid:wristband.uid, amount:selectedAmt});
+    toast(T('offline_queue',{n:offlineQueue.length}), 'warn', 4000);
     showIdle(); return;
   }
 
   try{
-    // Crear Stripe Checkout Session en el backend
-    const res=await fetch(API_URL+'/api/stripe/topup',{
+    const res = await fetch(API_URL+'/api/stripe/topup', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        wristband_id: wristband.id,
-        uid:          wristband.uid,
-        amount:       selectedAmt,
-        event_id:     wristband.event_id,
-        operator:     'Kiosco autoservicio '+POS_ID,
-        success_url:  'https://inout-kiosk.vercel.app?stripe=success&session_id={CHECKOUT_SESSION_ID}',
-        cancel_url:   'https://inout-kiosk.vercel.app?stripe=cancel',
+      body: JSON.stringify({
+        wristband_id: wristband.id, uid: wristband.uid,
+        amount: selectedAmt, event_id: wristband.event_id,
+        operator: 'Kiosco autoservicio '+POS_ID,
+        success_url: 'https://inout-kiosk.vercel.app?stripe=success&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url:  'https://inout-kiosk.vercel.app?stripe=cancel',
       })
     });
-    const data=await res.json();
-    if(data.error){ toast('Error: '+data.error,'err'); showSummary(); return; }
+    const data = await res.json();
+    if(data.error){ toast('Error: '+data.error, 'err'); showSummary(); return; }
 
-    // Guardar session_id para verificar después
     sessionStorage.setItem('k_stripe_session', data.session_id||'');
-    sessionStorage.setItem('k_wb_id',    wristband.id);
-    sessionStorage.setItem('k_amount',   String(selectedAmt));
-    sessionStorage.setItem('k_ref',      data.reference||'');
+    sessionStorage.setItem('k_wb_id',   wristband.id);
+    sessionStorage.setItem('k_amount',  String(selectedAmt));
+    sessionStorage.setItem('k_ref',     data.reference||'');
 
-    // Mostrar pantalla de procesamiento con iframe de Stripe embebido
     showStripeCheckout(data.checkout_url, data.session_id);
-
   }catch(err){
     console.error(err);
-    toast('Error de conexión. Inténtalo de nuevo.','err'); showSummary();
+    toast('Error de conexión. Inténtalo de nuevo.', 'err'); showSummary();
   }
 }
 
 // ══════════════════════════════════════════════════════════
-//  SCREEN 5 — STRIPE CHECKOUT EMBEBIDO
+//  SCREEN 5 — STRIPE EMBEBIDO
 // ══════════════════════════════════════════════════════════
 function showStripeCheckout(checkoutUrl, sessionId){
-  const fee=calcFee(selectedAmt), total=selectedAmt+fee;
-  const body=document.getElementById('k-body');
-  body.dataset.screen='processing'; resetIdleTimer();
-
-  body.innerHTML=`
+  const fee = calcFee(selectedAmt), total = selectedAmt + fee;
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'processing'; resetIdleTimer();
+  body.innerHTML = `
     <div style="width:100%;display:flex;flex-direction:column;gap:12px">
-      <!-- Resumen encima del iframe -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm)">
         <div>
           <div style="font-size:12px;color:var(--muted)">${wristband.holder_name||wristband.uid}</div>
@@ -1025,50 +593,56 @@ function showStripeCheckout(checkoutUrl, sessionId){
         </div>
         <div style="font-family:Syne;font-size:24px;font-weight:800;color:var(--a1)">${fmt(total)} €</div>
       </div>
-
-      <!-- Iframe de Stripe Checkout -->
       <div style="background:#fff;border-radius:var(--r);overflow:hidden;min-height:420px;position:relative">
-        <iframe
-          id="stripe-iframe"
-          src="${checkoutUrl}"
-          style="width:100%;height:520px;border:none;display:block"
-          allow="payment *"
-        ></iframe>
+        <iframe id="stripe-iframe" src="${checkoutUrl}" style="width:100%;height:520px;border:none;display:block" allow="payment *"></iframe>
       </div>
-
       <div class="proc-status" id="k-status" style="text-align:center">
         💳 Introduce los datos de tu tarjeta en el formulario
       </div>
-
       <button class="btn btn-danger" onclick="cancelPayment()">${T('cancel_payment')}</button>
-    </div>
-  `;
+    </div>`;
 
-  // Polling para detectar cuando el pago se complete
-  // Stripe redirigirá a success_url con session_id en la URL
   checkInterval = setInterval(checkStripePayment, 4000);
-
-  // También escuchar si la URL cambia (redirect de Stripe)
   window.addEventListener('message', onStripeMessage);
 }
 
 function onStripeMessage(event){
-  // Stripe puede enviar mensajes desde el iframe cuando el pago completa
-  if(event.data && (event.data.type === 'payment_intent.succeeded' ||
-                    event.data === 'stripe:checkout:complete')){
+  if(event.data && (event.data.type === 'payment_intent.succeeded' || event.data === 'stripe:checkout:complete')){
     clearInterval(checkInterval);
     window.removeEventListener('message', onStripeMessage);
     checkStripePayment();
   }
 }
 
-// Verificar el estado de la sesión de Stripe
+// ══════════════════════════════════════════════════════════
+//  FIX: PANTALLA DE VERIFICACIÓN (cubre el gap tras redirect)
+// ══════════════════════════════════════════════════════════
+function showVerifyingScreen(){
+  const body = document.getElementById('k-body');
+  if(!body) return;
+  body.dataset.screen = 'verifying';
+  body.innerHTML = `
+    <div style="text-align:center;width:100%;max-width:380px;padding:20px 0">
+      <div class="spin"></div>
+      <div style="font-family:Syne;font-size:22px;font-weight:700;margin-bottom:12px">${T('complete_payment')}</div>
+      <div class="proc-status" id="k-status">${T('verifying')}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">${T('auto_check')}</div>
+      <div style="margin-top:22px;display:flex;flex-direction:column;gap:9px;max-width:320px;margin-left:auto;margin-right:auto">
+        <button class="btn btn-sup" onclick="checkStripePayment()">${T('verify_now')}</button>
+        <button class="btn btn-danger" onclick="cancelPayment()">${T('cancel_payment')}</button>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  FIX: checkStripePayment — maneja #k-status inexistente
+// ══════════════════════════════════════════════════════════
 async function checkStripePayment(){
   const sessionId = sessionStorage.getItem('k_stripe_session');
   const wbId      = sessionStorage.getItem('k_wb_id');
   const amount    = sessionStorage.getItem('k_amount');
   const ref       = sessionStorage.getItem('k_ref');
-  if(!sessionId||!wbId) return;
+  if(!sessionId || !wbId) return;
 
   const el = document.getElementById('k-status');
   if(el) el.innerHTML = T('verifying');
@@ -1077,125 +651,174 @@ async function checkStripePayment(){
     const res  = await fetch(`${API_URL}/api/stripe/verify-topup?session_id=${sessionId}&wristband=${wbId}&amount=${amount}&ref=${ref}`);
     const data = await res.json();
 
-    if(data.status==='paid'||data.status==='completed'){
-      clearInterval(checkInterval); checkInterval=null;
+    if(data.status === 'paid' || data.status === 'completed'){
+      clearInterval(checkInterval); checkInterval = null;
+      window.removeEventListener('message', onStripeMessage);
+
+      const a = parseFloat(amount);
+      todayStats.topups++; todayStats.amount += a;
+      todayStats.comm += calcFee(a); todayStats.last = new Date().toISOString();
+      saveStats();
+
+      const savedRef = ref || ('REF-'+Date.now());
+      clearSession();
+
+      // Fallback si wristband es null tras reload
+      if(!wristband){
+        wristband = { uid: wbId, holder_name: data.holder_name || null, email: null, balance: data.balance };
+      }
+
+      logEvent('payment_success', {uid:wristband.uid, amount:a, new_balance:data.balance, provider:'stripe'});
+      showSuccess(a, data.balance, data.holder_name);
+
+    } else if(data.status === 'expired' || data.status === 'canceled'){
+      clearInterval(checkInterval); checkInterval = null;
       window.removeEventListener('message', onStripeMessage);
       clearSession();
-      const a=parseFloat(amount);
-      todayStats.topups++; todayStats.amount+=a;
-      todayStats.comm+=calcFee(a); todayStats.last=new Date().toISOString();
-      saveStats();
-      logEvent('payment_success',{uid:wristband?.uid,amount:a,new_balance:data.balance,provider:'stripe'});
-      showSuccess(a, data.balance, data.holder_name);
-    } else if(data.status==='expired'||data.status==='canceled'){
-      clearInterval(checkInterval); checkInterval=null;
-      clearSession();
-      toast('Pago cancelado o expirado.','warn');
-      showSummary();
+      toast('Pago cancelado o expirado.', 'warn');
+      showIdle();
+
     } else {
-      // pending — seguir esperando
-      if(el) el.innerHTML=`⏳ Esperando confirmación… <span style="font-size:11px;color:var(--muted)">${T('auto_check')}</span>`;
+      // pending — mantener pantalla visible
+      const statusEl = document.getElementById('k-status');
+      if(statusEl){
+        statusEl.innerHTML = `⏳ Esperando confirmación…
+          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">${T('auto_check')}</span>`;
+      } else {
+        // k-status no existe → regenerar pantalla de verificación
+        showVerifyingScreen();
+      }
     }
   }catch(e){
-    if(el) el.textContent='⚠️ Error al verificar. Reintenta.';
+    const statusEl = document.getElementById('k-status');
+    if(statusEl) statusEl.textContent = '⚠️ Error al verificar. Reintenta.';
+    else showVerifyingScreen();
   }
 }
 
-// Alias para compatibilidad con botón "Verificar ahora"
 async function checkPayment(){ await checkStripePayment(); }
 
-function showProcessing(){
-  // Fallback legacy — redirige a checkout si hay sesión activa
-  const sessionId=sessionStorage.getItem('k_stripe_session');
-  if(sessionId) checkStripePayment();
-}
-
 function cancelPayment(){
-  clearInterval(checkInterval); checkInterval=null;
+  clearInterval(checkInterval); checkInterval = null;
   window.removeEventListener('message', onStripeMessage);
-  clearSession(); toast(T('cancel'),'warn'); showIdle();
+  clearSession(); toast(T('cancel'), 'warn'); showIdle();
 }
 
 function clearSession(){
-  ['k_stripe_session','k_wb_id','k_amount','k_ref'].forEach(k=>sessionStorage.removeItem(k));
+  ['k_stripe_session','k_wb_id','k_amount','k_ref'].forEach(k => sessionStorage.removeItem(k));
 }
 
 // ══════════════════════════════════════════════════════════
-//  SCREEN 6 — ÉXITO + QR + RECIBO
+//  FIX: checkResume — CRÍTICO, muestra pantalla antes de verificar
+// ══════════════════════════════════════════════════════════
+async function checkResume(){
+  const params        = new URLSearchParams(window.location.search);
+  const stripeResult  = params.get('stripe');
+  const stripeSession = params.get('session_id') || sessionStorage.getItem('k_stripe_session');
+
+  // ── Caso 1: ?stripe=success ──
+  if(stripeResult === 'success' && stripeSession){
+    window.history.replaceState({}, '', window.location.pathname);
+
+    const wbId   = sessionStorage.getItem('k_wb_id');
+    const amount = sessionStorage.getItem('k_amount');
+    sessionStorage.setItem('k_stripe_session', stripeSession);
+
+    if(wbId){
+      try{
+        const {data:wb} = await _sb.from('rfid_wristbands').select('*').eq('id', wbId).maybeSingle();
+        if(wb){ wristband = wb; selectedAmt = parseFloat(amount||'0'); }
+      }catch(e){ console.warn('checkResume: no se pudo recuperar wristband', e); }
+    }
+
+    // CRÍTICO: mostrar pantalla ANTES de llamar al API
+    showVerifyingScreen();
+    await checkStripePayment();
+
+    if(checkInterval === null && document.getElementById('k-body')?.dataset.screen === 'verifying'){
+      checkInterval = setInterval(checkStripePayment, 4000);
+    }
+    return true;
+  }
+
+  // ── Caso 2: ?stripe=cancel ──
+  if(stripeResult === 'cancel'){
+    window.history.replaceState({}, '', window.location.pathname);
+    clearSession();
+    toast('Pago cancelado.', 'warn');
+    return false;
+  }
+
+  // ── Caso 3: sesión pendiente de carga anterior ──
+  const wbId   = sessionStorage.getItem('k_wb_id');
+  const amount = sessionStorage.getItem('k_amount');
+  if(!wbId || !amount || !stripeSession) return false;
+
+  try{
+    const {data:wb} = await _sb.from('rfid_wristbands').select('*').eq('id', wbId).maybeSingle();
+    if(!wb){ clearSession(); return false; }
+    wristband   = wb;
+    selectedAmt = parseFloat(amount);
+  }catch(e){ clearSession(); return false; }
+
+  showVerifyingScreen();
+  await checkStripePayment();
+  if(checkInterval === null && document.getElementById('k-body')?.dataset.screen === 'verifying'){
+    checkInterval = setInterval(checkStripePayment, 4000);
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════════════════════
+//  SCREEN 6 — ÉXITO + QR
 // ══════════════════════════════════════════════════════════
 function showSuccess(amount, newBalance, name){
   if(navigator.vibrate) navigator.vibrate([100,60,100]);
+  const ref = sessionStorage.getItem('k_ref') || ('REF-'+Date.now());
+  const qrData = JSON.stringify({ref, uid:wristband?.uid||'', amount, newBalance, ts:new Date().toISOString(), pos:POS_ID});
 
-  const ref=sessionStorage.getItem('k_ref')||('REF-'+Date.now());
-  const qrData=JSON.stringify({
-    ref, uid:wristband?.uid||'', amount, newBalance,
-    ts:new Date().toISOString(), pos:POS_ID
-  });
-
-  const overlay=document.createElement('div');
-  overlay.className='success-overlay';
-  overlay.innerHTML=`
+  const overlay = document.createElement('div');
+  overlay.className = 'success-overlay';
+  overlay.innerHTML = `
     <div class="success-box">
       <span class="success-emoji">✅</span>
       <div class="success-title">${T('success_title')}</div>
       <div class="success-new">+${fmt(amount)} €</div>
       <div class="success-sub">${T('new_balance')} <strong style="color:var(--a1);font-family:Syne">${fmt(newBalance)} €</strong></div>
-      ${name?`<div style="font-size:13px;color:var(--muted);margin-top:5px">${name}</div>`:''}
+      ${name ? `<div style="font-size:13px;color:var(--muted);margin-top:5px">${name}</div>` : ''}
       <div class="qr-wrap"><canvas id="qr-canvas"></canvas></div>
       <div style="font-size:10px;color:var(--muted);margin-top:6px">Ref: ${ref}</div>
       ${wristband?.email
-        ? `<button class="btn btn-g" style="margin-top:10px;max-width:280px;font-size:13px;padding:10px" onclick="sendReceipt('${ref}',${amount},${newBalance},'${wristband.email}')">
-            📧 Enviar recibo al email
-           </button>`
-        : `<div style="font-size:12px;color:var(--muted);margin-top:10px">${T('no_email')}</div>`
-      }
+        ? `<button class="btn btn-g" style="margin-top:10px;max-width:280px;font-size:13px;padding:10px" onclick="sendReceipt('${ref}',${amount},${newBalance},'${wristband.email}')">📧 Enviar recibo al email</button>`
+        : `<div style="font-size:12px;color:var(--muted);margin-top:10px">${T('no_email')}</div>`}
       <div class="success-count" id="scd">${T('back_soon',{n:5})}</div>
-      <button class="btn btn-p" style="margin-top:16px;max-width:280px"
-        onclick="this.closest('.success-overlay').remove();showIdle()">
-        ${T('back_now')}
-      </button>
-    </div>
-  `;
+      <button class="btn btn-p" style="margin-top:16px;max-width:280px" onclick="this.closest('.success-overlay').remove();showIdle()">${T('back_now')}</button>
+    </div>`;
   document.body.appendChild(overlay);
 
-  // Generar QR
-  setTimeout(()=>{
-    const canvas=document.getElementById('qr-canvas');
-    if(canvas&&window.QRCode){
-      QRCode.toCanvas(canvas, qrData, {width:144,margin:1,color:{dark:'#000',light:'#fff'}}, ()=>{});
-    }
-  },100);
+  setTimeout(() => {
+    const canvas = document.getElementById('qr-canvas');
+    if(canvas && window.QRCode) QRCode.toCanvas(canvas, qrData, {width:144,margin:1,color:{dark:'#000',light:'#fff'}}, ()=>{});
+  }, 100);
 
-  // Cuenta atrás 5s
-  let secs=5;
-  const ticker=setInterval(()=>{
+  let secs = 5;
+  const ticker = setInterval(() => {
     secs--;
-    const el=document.getElementById('scd');
-    if(el) el.textContent=T('back_soon',{n:secs});
-    if(secs<=0){ clearInterval(ticker); overlay.remove(); showIdle(); }
-  },1000);
+    const el = document.getElementById('scd');
+    if(el) el.textContent = T('back_soon',{n:secs});
+    if(secs <= 0){ clearInterval(ticker); overlay.remove(); showIdle(); }
+  }, 1000);
 }
 
 async function sendReceipt(ref, amount, newBalance, email){
-  const btn=event.target;
-  btn.disabled=true; btn.textContent='Enviando…';
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Enviando…';
   try{
-    const fee=calcFee(amount);
-    await fetch(API_URL+'/api/rfid/receipt',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        email, ref, amount, fee, total:amount+fee,
-        new_balance:newBalance, uid:wristband?.uid,
-        holder:wristband?.holder_name, pos:POS_ID,
-        ts:new Date().toISOString()
-      })
-    });
-    toast(T('receipt_sent'),'ok');
-    btn.textContent='✅ Enviado';
-  }catch(e){
-    toast(T('receipt_error'),'err');
-    btn.disabled=false; btn.textContent='📧 Reintentar';
-  }
+    const fee = calcFee(amount);
+    await fetch(API_URL+'/api/rfid/receipt', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, ref, amount, fee, total:amount+fee, new_balance:newBalance, uid:wristband?.uid, holder:wristband?.holder_name, pos:POS_ID, ts:new Date().toISOString()})});
+    toast(T('receipt_sent'), 'ok');
+    btn.textContent = '✅ Enviado';
+  }catch(e){ toast(T('receipt_error'), 'err'); btn.disabled = false; btn.textContent = '📧 Reintentar'; }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1203,9 +826,9 @@ async function sendReceipt(ref, amount, newBalance, email){
 // ══════════════════════════════════════════════════════════
 async function showHistory(){
   if(!wristband) return;
-  const body=document.getElementById('k-body');
-  body.dataset.screen='history'; resetIdleTimer();
-  body.innerHTML=`
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'history'; resetIdleTimer();
+  body.innerHTML = `
     <div style="width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <div style="font-family:Syne;font-weight:700;font-size:18px">${T('history_title')}</div>
       <div style="text-align:right">
@@ -1214,35 +837,19 @@ async function showHistory(){
       </div>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-family:monospace">${wristband.uid}</div>
-    <div id="tx-list" class="tx-list">
-      <div style="text-align:center;color:var(--muted);font-size:14px;padding:26px">Cargando…</div>
-    </div>
-    <button class="btn btn-g" style="margin-top:11px;font-size:13px;min-height:44px;padding:11px" onclick="showBalance(wristband)">
-      ${T('back_profile')}
-    </button>
-  `;
+    <div id="tx-list" class="tx-list"><div style="text-align:center;color:var(--muted);font-size:14px;padding:26px">Cargando…</div></div>
+    <button class="btn btn-g" style="margin-top:11px;font-size:13px;min-height:44px;padding:11px" onclick="showBalance(wristband)">${T('back_profile')}</button>`;
   try{
-    const {data:txs}=await _sb.from('rfid_transactions')
-      .select('*').eq('wristband_id',wristband.id)
-      .order('created_at',{ascending:false}).limit(30);
-    const list=document.getElementById('tx-list');
-    if(!list) return;
+    const {data:txs} = await _sb.from('rfid_transactions').select('*').eq('wristband_id', wristband.id).order('created_at',{ascending:false}).limit(30);
+    const list = document.getElementById('tx-list'); if(!list) return;
     if(!txs||!txs.length){ list.innerHTML=`<div style="text-align:center;color:var(--muted);font-size:14px;padding:26px">${T('no_txs')}</div>`; return; }
-    list.innerHTML=txs.map(tx=>{
-      const isIn=tx.amount>0;
-      return `
-        <div class="tx-item">
-          <div class="tx-icon ${isIn?'in':'out'}">${isIn?'⬆️':'⬇️'}</div>
-          <div class="tx-info">
-            <div class="tx-concept">${tx.description||(isIn?T('recharge_cashless'):T('consumption'))}</div>
-            <div class="tx-date">${fmtDate(tx.created_at)}</div>
-          </div>
-          <div class="tx-amount ${isIn?'in':'out'}">${isIn?'+':''}${fmt(tx.amount)} €</div>
-        </div>`;
+    list.innerHTML = txs.map(tx => {
+      const isIn = tx.amount > 0;
+      return `<div class="tx-item"><div class="tx-icon ${isIn?'in':'out'}">${isIn?'⬆️':'⬇️'}</div><div class="tx-info"><div class="tx-concept">${tx.description||(isIn?T('recharge_cashless'):T('consumption'))}</div><div class="tx-date">${fmtDate(tx.created_at)}</div></div><div class="tx-amount ${isIn?'in':'out'}">${isIn?'+':''}${fmt(tx.amount)} €</div></div>`;
     }).join('');
   }catch(e){
-    const list=document.getElementById('tx-list');
-    if(list) list.innerHTML='<div style="text-align:center;color:var(--muted);font-size:14px;padding:26px">Error al cargar movimientos.</div>';
+    const list = document.getElementById('tx-list');
+    if(list) list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:14px;padding:26px">Error al cargar movimientos.</div>';
   }
 }
 
@@ -1250,67 +857,63 @@ async function showHistory(){
 //  FUERA DE SERVICIO
 // ══════════════════════════════════════════════════════════
 function showOOS(){
-  const sc=document.getElementById('oos-screen');
-  document.getElementById('oos-title').textContent = T('oos_on').replace('🚫 ','').replace('Activar ','');
-  document.getElementById('oos-msg').textContent   = oosMsg || 'Este kiosco no está disponible. Por favor, dirígete al personal del evento.';
-  document.getElementById('oos-footer').textContent= 'InOut Kiosk · '+POS_ID;
-  sc.style.display='flex';
+  const sc = document.getElementById('oos-screen');
+  document.getElementById('oos-msg').textContent = oosMsg || 'Este kiosco no está disponible. Por favor, dirígete al personal del evento.';
+  document.getElementById('oos-footer').textContent = 'InOut Kiosk · '+POS_ID;
+  sc.style.display = 'flex';
 }
 
 function toggleOOS(msg=''){
-  oosActive=!oosActive;
-  oosMsg=msg;
+  oosActive = !oosActive; oosMsg = msg;
   localStorage.setItem('k_oos', JSON.stringify(oosActive));
   localStorage.setItem('k_oos_msg', msg);
-  logEvent(oosActive?'oos_on':'oos_off',{msg});
+  logEvent(oosActive ? 'oos_on' : 'oos_off', {msg});
   if(oosActive) showOOS();
-  else { document.getElementById('oos-screen').style.display='none'; showIdle(); }
+  else{ document.getElementById('oos-screen').style.display = 'none'; showIdle(); }
 }
 
 // ══════════════════════════════════════════════════════════
-//  SUPERVISOR — PIN ACCESO
+//  SUPERVISOR — PIN
 // ══════════════════════════════════════════════════════════
-let supTapCount=0;
-function supTapStart(){ supTapTimer=setTimeout(()=>{ supTapCount=0; openPIN('supervisor',()=>showSupervisor()); },800); }
+let supTapCount = 0;
+function supTapStart(){ supTapTimer = setTimeout(() => { supTapCount = 0; openPIN('supervisor', () => showSupervisor()); }, 800); }
 function supTapEnd(){ clearTimeout(supTapTimer); }
 
 function openPIN(context, callback){
-  pinBuffer=''; pinCallback=callback;
-  document.getElementById('pin-title').textContent = context==='supervisor'?'Acceso supervisor':'PIN requerido';
+  pinBuffer = ''; pinCallback = callback;
+  document.getElementById('pin-title').textContent = context === 'supervisor' ? 'Acceso supervisor' : 'PIN requerido';
   updatePINDots();
-  document.getElementById('pin-overlay').style.display='flex';
+  document.getElementById('pin-overlay').style.display = 'flex';
 }
 
 function closePIN(){
-  pinBuffer='';
-  document.getElementById('pin-overlay').style.display='none';
+  pinBuffer = '';
+  document.getElementById('pin-overlay').style.display = 'none';
 }
 
 function pinKey(k){
-  if(k==='⌫'){ pinBuffer=pinBuffer.slice(0,-1); }
-  else if(k===''){ return; }
-  else if(pinBuffer.length<4){ pinBuffer+=k; }
+  if(k === '⌫'){ pinBuffer = pinBuffer.slice(0,-1); }
+  else if(k === ''){ return; }
+  else if(pinBuffer.length < 4){ pinBuffer += k; }
   updatePINDots();
-  if(pinBuffer.length===4){
-    setTimeout(()=>{
-      if(pinBuffer===SUP_PIN){ closePIN(); if(pinCallback) pinCallback(); }
-      else {
-        pinBuffer=''; updatePINDots();
-        // Shake animation
-        const box=document.querySelector('.pin-box');
-        box.style.animation='none';
-        box.offsetHeight;
-        box.style.animation='pin-shake .3s ease';
-        toast('PIN incorrecto','err');
+  if(pinBuffer.length === 4){
+    setTimeout(() => {
+      if(pinBuffer === SUP_PIN){ closePIN(); if(pinCallback) pinCallback(); }
+      else{
+        pinBuffer = ''; updatePINDots();
+        const box = document.querySelector('.pin-box');
+        box.style.animation = 'none'; box.offsetHeight;
+        box.style.animation = 'pin-shake .3s ease';
+        toast('PIN incorrecto', 'err');
       }
-    },200);
+    }, 200);
   }
 }
 
 function updatePINDots(){
-  for(let i=0;i<4;i++){
-    const d=document.getElementById('pd'+i);
-    if(d) d.className='pin-dot'+(i<pinBuffer.length?' filled':'');
+  for(let i = 0; i < 4; i++){
+    const d = document.getElementById('pd'+i);
+    if(d) d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
   }
 }
 
@@ -1318,133 +921,63 @@ function updatePINDots(){
 //  SCREEN 8 — SUPERVISOR
 // ══════════════════════════════════════════════════════════
 function showSupervisor(){
-  const body=document.getElementById('k-body');
-  body.dataset.screen='supervisor'; resetIdleTimer();
-  const avg = todayStats.topups>0 ? todayStats.amount/todayStats.topups : 0;
-
-  body.innerHTML=`
-    <div style="font-family:Syne;font-weight:800;font-size:20px;text-align:center;color:var(--a3);margin-bottom:4px">
-      ⚙️ ${T('supervisor')}
-    </div>
+  const body = document.getElementById('k-body');
+  body.dataset.screen = 'supervisor'; resetIdleTimer();
+  const avg = todayStats.topups > 0 ? todayStats.amount / todayStats.topups : 0;
+  body.innerHTML = `
+    <div style="font-family:Syne;font-weight:800;font-size:20px;text-align:center;color:var(--a3);margin-bottom:4px">⚙️ ${T('supervisor')}</div>
     <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px">${POS_ID} · ${new Date().toLocaleDateString('es-ES')}</div>
-
     <div class="sup-grid">
-      <div class="sup-stat wide">
-        <div class="s-val">${fmt(todayStats.amount)} €</div>
-        <div class="s-label">${T('today_amount')}</div>
-      </div>
-      <div class="sup-stat">
-        <div class="s-val">${todayStats.topups}</div>
-        <div class="s-label">${T('today_topups')}</div>
-      </div>
-      <div class="sup-stat">
-        <div class="s-val">${fmt(todayStats.comm)} €</div>
-        <div class="s-label">${T('today_comm')}</div>
-      </div>
-      <div class="sup-stat">
-        <div class="s-val">${avg>0?fmt(avg)+' €':'—'}</div>
-        <div class="s-label">${T('avg_topup')}</div>
-      </div>
-      <div class="sup-stat">
-        <div class="s-val">${offlineQueue.length}</div>
-        <div class="s-label">${T('offline_ops')}</div>
-      </div>
+      <div class="sup-stat wide"><div class="s-val">${fmt(todayStats.amount)} €</div><div class="s-label">${T('today_amount')}</div></div>
+      <div class="sup-stat"><div class="s-val">${todayStats.topups}</div><div class="s-label">${T('today_topups')}</div></div>
+      <div class="sup-stat"><div class="s-val">${fmt(todayStats.comm)} €</div><div class="s-label">${T('today_comm')}</div></div>
+      <div class="sup-stat"><div class="s-val">${avg>0?fmt(avg)+' €':'—'}</div><div class="s-label">${T('avg_topup')}</div></div>
+      <div class="sup-stat"><div class="s-val">${offlineQueue.length}</div><div class="s-label">${T('offline_ops')}</div></div>
       <div class="sup-stat wide" style="font-size:12px;color:var(--muted);padding:12px">
         <div>${T('last_topup')}: ${todayStats.last?fmtDate(todayStats.last):T('never')}</div>
         <div style="margin-top:4px">Auto-refresh: ${String(AUTO_REFRESH_HOUR).padStart(2,'0')}:00 AM</div>
       </div>
     </div>
-
     <div style="width:100%;display:flex;flex-direction:column;gap:9px;margin-top:14px">
-      <button class="btn ${oosActive?'btn-p':'btn-danger'}" onclick="promptOOS()">
-        ${oosActive?T('oos_off'):T('oos_on')}
-      </button>
-      ${offlineQueue.length?`<button class="btn btn-sup" onclick="flushOfflineQueue()">⚡ Sincronizar ${offlineQueue.length} op(s) offline</button>`:''}
+      <button class="btn ${oosActive?'btn-p':'btn-danger'}" onclick="promptOOS()">${oosActive?T('oos_off'):T('oos_on')}</button>
+      ${offlineQueue.length ? `<button class="btn btn-sup" onclick="flushOfflineQueue()">⚡ Sincronizar ${offlineQueue.length} op(s) offline</button>` : ''}
       <button class="btn btn-g" style="font-size:13px;padding:11px" onclick="showIdle()">← ${T('back')}</button>
-    </div>
-  `;
+    </div>`;
 }
 
 function promptOOS(){
   if(oosActive){ toggleOOS(); return; }
-  const msg=window.prompt('Mensaje para mostrar en pantalla (opcional):','Este kiosco no está disponible momentáneamente.');
-  if(msg!==null) toggleOOS(msg||'');
-}
-
-// ══════════════════════════════════════════════════════════
-//  RESUME tras deep link Android
-// ══════════════════════════════════════════════════════════
-async function checkResume(){
-  // Stripe: ¿volvemos de una redirección de Checkout?
-  const params = new URLSearchParams(window.location.search);
-  const stripeResult  = params.get('stripe');
-  const stripeSession = params.get('session_id') || sessionStorage.getItem('k_stripe_session');
-
-  if(stripeResult === 'success' && stripeSession){
-    window.history.replaceState({}, '', window.location.pathname);
-    const wbId  = sessionStorage.getItem('k_wb_id');
-    const amount= sessionStorage.getItem('k_amount');
-    if(wbId && amount){
-      const {data:wb}=await _sb.from('rfid_wristbands').select('*').eq('id',wbId).single();
-      if(wb){ wristband=wb; selectedAmt=parseFloat(amount); }
-    }
-    sessionStorage.setItem('k_stripe_session', stripeSession);
-    await checkStripePayment();
-    return true;
-  }
-
-  if(stripeResult === 'cancel'){
-    window.history.replaceState({}, '', window.location.pathname);
-    clearSession(); toast('Pago cancelado.','warn'); return false;
-  }
-
-  // ¿Hay sesión pendiente de una carga anterior?
-  const wbId  = sessionStorage.getItem('k_wb_id');
-  const amount= sessionStorage.getItem('k_amount');
-  if(!wbId||!amount||!stripeSession) return false;
-
-  const {data:wb}=await _sb.from('rfid_wristbands').select('*').eq('id',wbId).single();
-  if(!wb){ clearSession(); return false; }
-  wristband=wb; selectedAmt=parseFloat(amount);
-  await checkStripePayment();
-  checkInterval=setInterval(checkStripePayment,4000);
-  return true;
+  const msg = window.prompt('Mensaje para mostrar en pantalla (opcional):', 'Este kiosco no está disponible momentáneamente.');
+  if(msg !== null) toggleOOS(msg||'');
 }
 
 // ══════════════════════════════════════════════════════════
 //  TRAZABILIDAD
 // ══════════════════════════════════════════════════════════
 function logEvent(event, data={}){
-  const entry={ts:new Date().toISOString(),pos:POS_ID,event,...data};
-  const logs=JSON.parse(sessionStorage.getItem('kiosk_logs')||'[]');
-  logs.push(entry); if(logs.length>400) logs.shift();
-  sessionStorage.setItem('kiosk_logs',JSON.stringify(logs));
-  fetch(API_URL+'/api/rfid/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(entry)}).catch(()=>{});
+  const entry = {ts:new Date().toISOString(), pos:POS_ID, event, ...data};
+  const logs = JSON.parse(sessionStorage.getItem('kiosk_logs')||'[]');
+  logs.push(entry); if(logs.length > 400) logs.shift();
+  sessionStorage.setItem('kiosk_logs', JSON.stringify(logs));
+  fetch(API_URL+'/api/rfid/log', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry)}).catch(()=>{});
 }
 
 function scheduleDailyReport(){
-  const now=new Date(), target=new Date(now);
-  target.setHours(23,59,0,0); if(now>=target) target.setDate(target.getDate()+1);
+  const now = new Date(), target = new Date(now);
+  target.setHours(23,59,0,0); if(now >= target) target.setDate(target.getDate()+1);
   setTimeout(function run(){
-    const today=new Date().toISOString().split('T')[0];
-    const logs=JSON.parse(sessionStorage.getItem('kiosk_logs')||'[]');
-    const tl=logs.filter(l=>l.ts.startsWith(today));
-    fetch(API_URL+'/api/rfid/daily-report',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({pos_id:POS_ID,date:today,logs:tl,...todayStats})
-    }).catch(()=>{});
-    setTimeout(run,24*60*60*1000);
-  },target-now);
+    const today = new Date().toISOString().split('T')[0];
+    const logs = JSON.parse(sessionStorage.getItem('kiosk_logs')||'[]');
+    fetch(API_URL+'/api/rfid/daily-report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pos_id:POS_ID, date:today, logs:logs.filter(l=>l.ts.startsWith(today)), ...todayStats})}).catch(()=>{});
+    setTimeout(run, 24*60*60*1000);
+  }, target - now);
 }
 
 function scheduleBackup(){
-  setInterval(()=>{
-    const logs=JSON.parse(sessionStorage.getItem('kiosk_logs')||'[]');
-    fetch(API_URL+'/api/rfid/backup',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({pos_id:POS_ID,ts:new Date().toISOString(),logs,stats:todayStats})
-    }).catch(()=>{});
-  },15*60*1000);
+  setInterval(() => {
+    const logs = JSON.parse(sessionStorage.getItem('kiosk_logs')||'[]');
+    fetch(API_URL+'/api/rfid/backup', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({pos_id:POS_ID, ts:new Date().toISOString(), logs, stats:todayStats})}).catch(()=>{});
+  }, 15*60*1000);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -1457,17 +990,13 @@ function scheduleBackup(){
   scheduleBackup();
   await initNFC();
   if(!isOnline) document.getElementById('offline-badge').classList.add('visible');
-
   document.addEventListener('touchstart', resetIdleTimer, {passive:true});
   document.addEventListener('click', resetIdleTimer);
-
-  const resumed=await checkResume();
+  const resumed = await checkResume();
   if(!resumed){
     if(oosActive) showOOS();
     else showIdle();
   }
-
-  // Intentar flush de cola offline al arrancar si hay conexión
   if(isOnline && offlineQueue.length) flushOfflineQueue();
 })();
 </script>
