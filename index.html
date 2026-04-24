@@ -790,33 +790,11 @@ async function checkResume(){
     return false;
   }
 
-  // ── Caso 3: sesión pendiente de carga anterior (sin query params) ──
-  const wbId   = sessionStorage.getItem('k_wb_id');
-  const amount = sessionStorage.getItem('k_amount');
-  if(!wbId || !amount || !stripeSession) return false;
-
-  console.log('🔄 Resume: Found pending session in sessionStorage');
-
-  try{
-    const {data:wb} = await _sb.from('rfid_wristbands').select('*').eq('id', wbId).maybeSingle();
-    if(!wb){ clearSession(); return false; }
-    wristband   = wb;
-    selectedAmt = parseFloat(amount);
-    console.log('✅ Wristband recovered from pending session:', wristband.uid);
-  }catch(e){ clearSession(); return false; }
-
-  // 🔧 FIX: MOSTRAR PANTALLA PRIMERO
-  console.log('📺 Showing verifying screen for pending session');
-  showVerifyingScreen();
-  
-  console.log('🔍 Calling checkStripePayment for pending session...');
-  await checkStripePayment();
-  
-  if(checkInterval === null && document.getElementById('k-body')?.dataset.screen === 'verifying'){
-    console.log('⏱️ Starting check interval for pending session (every 4s)');
-    checkInterval = setInterval(checkStripePayment, 4000);
-  }
-  return true;
+  // ── Caso 3: NO verificar sesiones viejas ──
+  // Si no hay query params de Stripe, limpiar cualquier sesión antigua y continuar normal
+  console.log('🧹 No stripe params in URL, clearing any old session data');
+  clearSession();
+  return false;
 }
 
 // ══════════════════════════════════════════════════════════
