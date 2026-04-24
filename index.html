@@ -1035,6 +1035,13 @@ function scheduleBackup(){
   document.addEventListener('touchstart', resetIdleTimer, {passive:true});
   document.addEventListener('click', resetIdleTimer);
   
+  // Detener cualquier intervalo activo ANTES de verificar
+  if(checkInterval !== null){
+    console.log('🧹 Clearing checkInterval before resume check');
+    clearInterval(checkInterval);
+    checkInterval = null;
+  }
+  
   console.log('🔍 Checking for resume...');
   const resumed = await checkResume();
   console.log('✅ Resume check done, resumed:', resumed);
