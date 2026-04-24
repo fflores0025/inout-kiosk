@@ -127,7 +127,6 @@
     .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;}
     .pin-key{padding:18px;border-radius:var(--r-sm);background:var(--surf);border:1px solid var(--border);font-family:'Syne',sans-serif;font-size:22px;font-weight:700;cursor:pointer;transition:background .1s,transform .1s;}
     .pin-key:active{background:rgba(200,255,0,.1);transform:scale(.93);}
-    /* Verifying screen spinner */
     .spin{display:inline-block;width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--a3);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
     @keyframes spin{to{transform:rotate(360deg);}}
     @media(max-height:680px){
@@ -192,102 +191,12 @@
 </div>
 
 <div class="k-status">
-  <span><span class="dot"></span>InOut Kiosk v3.1</span>
+  <span><span class="dot"></span>InOut Kiosk v3.2-FIXED</span>
   <span id="k-time">—</span>
   <span id="k-nfc">NFC: —</span>
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════════════
-//  MÓDULO PIN DE DISPOSITIVO — se inyecta en Staff/Register/Kiosk/Valid
-//  PIN se pide UNA sola vez por sesión de app (hasta cerrar pestaña)
-//  Se guarda en sessionStorage (se borra al cerrar) NO en localStorage
-// ══════════════════════════════════════════════════════════════════
-const DEVICE_PIN = '1234'; // ← cambiar en producción
-const _DEVICE_PIN_KEY = 'inout_device_unlocked';
-
-function isDeviceUnlocked(){
-  return sessionStorage.getItem(_DEVICE_PIN_KEY) === 'yes';
-}
-
-function lockDevice(){
-  sessionStorage.removeItem(_DEVICE_PIN_KEY);
-}
-
-// Muestra la pantalla de PIN bloqueando toda la UI hasta que sea correcto
-// onUnlock: función a llamar cuando el PIN sea correcto
-function showDeviceLockScreen(appName, appIcon, onUnlock){
-  // Si ya está desbloqueado, ir directo
-  if(isDeviceUnlocked()){ onUnlock(); return; }
-
-  let _buf = '';
-  const overlay = document.createElement('div');
-  overlay.id = 'device-lock-overlay';
-  overlay.style.cssText = `
-    position:fixed;inset:0;z-index:9999;
-    background:var(--bg,#07070f);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:0;padding:24px;font-family:'DM Sans',sans-serif;
-  `;
-  overlay.innerHTML = `
-    <div style="text-align:center;margin-bottom:28px">
-      <div style="font-size:52px;margin-bottom:10px">${appIcon}</div>
-      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#e6e6f0">
-        InOut<span style="color:#c8ff00">.</span>
-      </div>
-      <div style="font-size:11px;color:#60607a;text-transform:uppercase;letter-spacing:2px;margin-top:3px">${appName}</div>
-    </div>
-    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:600;color:#e6e6f0;margin-bottom:4px">PIN de dispositivo</div>
-    <div style="font-size:13px;color:#60607a;margin-bottom:20px">Introduce el PIN para desbloquear</div>
-    <div id="dl-dots" style="display:flex;gap:14px;justify-content:center;margin-bottom:24px">
-      ${[0,1,2,3].map(i=>`<div id="dld${i}" style="width:14px;height:14px;border-radius:50%;border:2px solid #1c1c2e;transition:all .15s"></div>`).join('')}
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:280px">
-      ${[1,2,3,4,5,6,7,8,9,'',0,'⌫'].map(k=>
-        k===''
-        ? '<div></div>'
-        : `<div id="dlk-${k}" style="padding:18px;border-radius:14px;background:#0d0d1a;border:1px solid #1c1c2e;
-               font-family:'Syne',sans-serif;font-size:24px;font-weight:700;color:#e6e6f0;
-               text-align:center;cursor:pointer;user-select:none;transition:background .1s" 
-               onclick="dlKey('${k}')">${k}</div>`
-      ).join('')}
-    </div>
-    <div id="dl-err" style="height:18px;margin-top:14px;font-size:13px;color:#ff1744;text-align:center"></div>
-  `;
-  document.body.appendChild(overlay);
-
-  window.dlKey = function(k){
-    if(k==='⌫'){ _buf=_buf.slice(0,-1); }
-    else if(_buf.length<4){ _buf+=k; }
-    // Actualizar dots
-    for(let i=0;i<4;i++){
-      const d=document.getElementById('dld'+i);
-      if(d){ d.style.background=i<_buf.length?'#c8ff00':'transparent'; d.style.borderColor=i<_buf.length?'#c8ff00':'#1c1c2e'; }
-    }
-    if(_buf.length===4){
-      setTimeout(()=>{
-        if(_buf===DEVICE_PIN){
-          sessionStorage.setItem(_DEVICE_PIN_KEY,'yes');
-          overlay.style.transition='opacity .3s';
-          overlay.style.opacity='0';
-          setTimeout(()=>{ overlay.remove(); delete window.dlKey; onUnlock(); }, 300);
-        } else {
-          _buf='';
-          for(let i=0;i<4;i++){const d=document.getElementById('dld'+i);if(d){d.style.background='transparent';d.style.borderColor='#ff1744';}}
-          document.getElementById('dl-err').textContent='PIN incorrecto';
-          // Shake
-          overlay.style.transition='transform .08s';
-          overlay.style.transform='translateX(10px)';
-          setTimeout(()=>overlay.style.transform='translateX(-10px)',80);
-          setTimeout(()=>overlay.style.transform='translateX(5px)',160);
-          setTimeout(()=>{overlay.style.transform='translateX(0)';for(let i=0;i<4;i++){const d=document.getElementById('dld'+i);if(d)d.style.borderColor='#1c1c2e';}},240);
-          setTimeout(()=>document.getElementById('dl-err').textContent='',2000);
-        }
-      },150);
-    }
-  };
-}
-
 // ══════════════════════════════════════════════════════════
 //  CONFIG
 // ══════════════════════════════════════════════════════════
@@ -648,8 +557,8 @@ async function startPayment(){
         wristband_id: wristband.id, uid: wristband.uid,
         amount: selectedAmt, event_id: wristband.event_id,
         operator: 'Kiosco autoservicio '+POS_ID,
-        success_url: 'https://inout-kiosk.vercel.app?stripe=success&session_id={CHECKOUT_SESSION_ID}',
-        cancel_url:  'https://inout-kiosk.vercel.app?stripe=cancel',
+        success_url: window.location.origin + '?stripe=success&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url:  window.location.origin + '?stripe=cancel',
       })
     });
     const data = await res.json();
@@ -705,7 +614,7 @@ function onStripeMessage(event){
 }
 
 // ══════════════════════════════════════════════════════════
-//  FIX: PANTALLA DE VERIFICACIÓN (cubre el gap tras redirect)
+//  🔧 FIX CRÍTICO: Pantalla de verificación
 // ══════════════════════════════════════════════════════════
 function showVerifyingScreen(){
   const body = document.getElementById('k-body');
@@ -725,23 +634,35 @@ function showVerifyingScreen(){
 }
 
 // ══════════════════════════════════════════════════════════
-//  FIX: checkStripePayment — maneja #k-status inexistente
+//  🔧 FIX CRÍTICO: checkStripePayment
 // ══════════════════════════════════════════════════════════
 async function checkStripePayment(){
   const sessionId = sessionStorage.getItem('k_stripe_session');
   const wbId      = sessionStorage.getItem('k_wb_id');
   const amount    = sessionStorage.getItem('k_amount');
   const ref       = sessionStorage.getItem('k_ref');
-  if(!sessionId || !wbId) return;
+  
+  console.log('[checkStripePayment] sessionId:', sessionId, 'wbId:', wbId, 'amount:', amount);
+  
+  if(!sessionId || !wbId) {
+    console.warn('[checkStripePayment] Missing session data');
+    return;
+  }
 
   const el = document.getElementById('k-status');
   if(el) el.innerHTML = T('verifying');
 
   try{
-    const res  = await fetch(`${API_URL}/api/stripe/verify-topup?session_id=${sessionId}&wristband=${wbId}&amount=${amount}&ref=${ref}`);
+    const url = `${API_URL}/api/stripe/verify-topup?session_id=${sessionId}&wristband=${wbId}&amount=${amount}&ref=${ref||''}`;
+    console.log('[checkStripePayment] Fetching:', url);
+    
+    const res  = await fetch(url);
     const data = await res.json();
+    
+    console.log('[checkStripePayment] Response:', data);
 
     if(data.status === 'paid' || data.status === 'completed'){
+      console.log('✅ Payment SUCCESS');
       clearInterval(checkInterval); checkInterval = null;
       window.removeEventListener('message', onStripeMessage);
 
@@ -753,15 +674,23 @@ async function checkStripePayment(){
       const savedRef = ref || ('REF-'+Date.now());
       clearSession();
 
-      // Fallback si wristband es null tras reload
+      // Recuperar wristband si no existe
       if(!wristband){
-        wristband = { uid: wbId, holder_name: data.holder_name || null, email: null, balance: data.balance };
+        try{
+          const {data:wb} = await _sb.from('rfid_wristbands').select('*').eq('id', wbId).maybeSingle();
+          if(wb) wristband = wb;
+          else wristband = { id: wbId, uid: 'UNKNOWN', holder_name: data.holder_name || null, email: null, balance: data.balance };
+        }catch(e){
+          console.warn('Could not recover wristband', e);
+          wristband = { id: wbId, uid: 'UNKNOWN', holder_name: data.holder_name || null, email: null, balance: data.balance };
+        }
       }
 
       logEvent('payment_success', {uid:wristband.uid, amount:a, new_balance:data.balance, provider:'stripe'});
-      showSuccess(a, data.balance, data.holder_name);
+      showSuccess(a, data.balance, wristband.holder_name);
 
     } else if(data.status === 'expired' || data.status === 'canceled'){
+      console.log('❌ Payment CANCELED/EXPIRED');
       clearInterval(checkInterval); checkInterval = null;
       window.removeEventListener('message', onStripeMessage);
       clearSession();
@@ -769,20 +698,25 @@ async function checkStripePayment(){
       showIdle();
 
     } else {
-      // pending — mantener pantalla visible
+      // pending
+      console.log('⏳ Payment PENDING, status:', data.status);
       const statusEl = document.getElementById('k-status');
       if(statusEl){
         statusEl.innerHTML = `⏳ Esperando confirmación…
           <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">${T('auto_check')}</span>`;
       } else {
-        // k-status no existe → regenerar pantalla de verificación
+        console.warn('[checkStripePayment] #k-status not found, regenerating screen');
         showVerifyingScreen();
       }
     }
   }catch(e){
+    console.error('[checkStripePayment] Error:', e);
     const statusEl = document.getElementById('k-status');
     if(statusEl) statusEl.textContent = '⚠️ Error al verificar. Reintenta.';
-    else showVerifyingScreen();
+    else {
+      console.warn('[checkStripePayment] #k-status not found after error, regenerating screen');
+      showVerifyingScreen();
+    }
   }
 }
 
@@ -799,33 +733,49 @@ function clearSession(){
 }
 
 // ══════════════════════════════════════════════════════════
-//  FIX: checkResume — CRÍTICO, muestra pantalla antes de verificar
+//  🔧 FIX CRÍTICO: checkResume — PUNTO CLAVE DEL BUG
 // ══════════════════════════════════════════════════════════
 async function checkResume(){
   const params        = new URLSearchParams(window.location.search);
   const stripeResult  = params.get('stripe');
   const stripeSession = params.get('session_id') || sessionStorage.getItem('k_stripe_session');
 
+  console.log('[checkResume] stripeResult:', stripeResult, 'stripeSession:', stripeSession);
+
   // ── Caso 1: ?stripe=success ──
   if(stripeResult === 'success' && stripeSession){
+    console.log('🔄 Resume: stripe=success detected');
     window.history.replaceState({}, '', window.location.pathname);
 
     const wbId   = sessionStorage.getItem('k_wb_id');
     const amount = sessionStorage.getItem('k_amount');
     sessionStorage.setItem('k_stripe_session', stripeSession);
 
+    // Recuperar wristband si existe en sessionStorage
     if(wbId){
       try{
         const {data:wb} = await _sb.from('rfid_wristbands').select('*').eq('id', wbId).maybeSingle();
-        if(wb){ wristband = wb; selectedAmt = parseFloat(amount||'0'); }
-      }catch(e){ console.warn('checkResume: no se pudo recuperar wristband', e); }
+        if(wb){ 
+          wristband = wb; 
+          selectedAmt = parseFloat(amount||'0'); 
+          console.log('✅ Wristband recovered:', wristband.uid);
+        }
+      }catch(e){ 
+        console.warn('[checkResume] Could not recover wristband:', e); 
+      }
     }
 
-    // CRÍTICO: mostrar pantalla ANTES de llamar al API
+    // 🔧 FIX: MOSTRAR PANTALLA PRIMERO, ANTES DE LLAMAR AL API
+    console.log('📺 Showing verifying screen BEFORE API call');
     showVerifyingScreen();
+    
+    // Ahora sí, verificar el pago
+    console.log('🔍 Calling checkStripePayment...');
     await checkStripePayment();
 
+    // Si tras la primera verificación aún está pending, iniciar intervalo
     if(checkInterval === null && document.getElementById('k-body')?.dataset.screen === 'verifying'){
+      console.log('⏱️ Starting check interval (every 4s)');
       checkInterval = setInterval(checkStripePayment, 4000);
     }
     return true;
@@ -833,27 +783,37 @@ async function checkResume(){
 
   // ── Caso 2: ?stripe=cancel ──
   if(stripeResult === 'cancel'){
+    console.log('❌ Resume: stripe=cancel detected');
     window.history.replaceState({}, '', window.location.pathname);
     clearSession();
     toast('Pago cancelado.', 'warn');
     return false;
   }
 
-  // ── Caso 3: sesión pendiente de carga anterior ──
+  // ── Caso 3: sesión pendiente de carga anterior (sin query params) ──
   const wbId   = sessionStorage.getItem('k_wb_id');
   const amount = sessionStorage.getItem('k_amount');
   if(!wbId || !amount || !stripeSession) return false;
+
+  console.log('🔄 Resume: Found pending session in sessionStorage');
 
   try{
     const {data:wb} = await _sb.from('rfid_wristbands').select('*').eq('id', wbId).maybeSingle();
     if(!wb){ clearSession(); return false; }
     wristband   = wb;
     selectedAmt = parseFloat(amount);
+    console.log('✅ Wristband recovered from pending session:', wristband.uid);
   }catch(e){ clearSession(); return false; }
 
+  // 🔧 FIX: MOSTRAR PANTALLA PRIMERO
+  console.log('📺 Showing verifying screen for pending session');
   showVerifyingScreen();
+  
+  console.log('🔍 Calling checkStripePayment for pending session...');
   await checkStripePayment();
+  
   if(checkInterval === null && document.getElementById('k-body')?.dataset.screen === 'verifying'){
+    console.log('⏱️ Starting check interval for pending session (every 4s)');
     checkInterval = setInterval(checkStripePayment, 4000);
   }
   return true;
@@ -1071,25 +1031,29 @@ function scheduleBackup(){
 }
 
 // ══════════════════════════════════════════════════════════
-//  INIT
+//  🚀 INIT
 // ══════════════════════════════════════════════════════════
 (async function init(){
-  showDeviceLockScreen('Kiosco Cashless','🎟️', async()=>{
-    renderLangRow();
-    startClock();
-    scheduleDailyReport();
-    scheduleBackup();
-    await initNFC();
-    if(!isOnline) document.getElementById('offline-badge').classList.add('visible');
-    document.addEventListener('touchstart', resetIdleTimer, {passive:true});
-    document.addEventListener('click', resetIdleTimer);
-    const resumed = await checkResume();
-    if(!resumed){
-      if(oosActive) showOOS();
-      else showIdle();
-    }
-    if(isOnline && offlineQueue.length) flushOfflineQueue();
-  });
+  console.log('🚀 InOut Kiosk v3.2-FIXED initializing...');
+  renderLangRow();
+  startClock();
+  scheduleDailyReport();
+  scheduleBackup();
+  await initNFC();
+  if(!isOnline) document.getElementById('offline-badge').classList.add('visible');
+  document.addEventListener('touchstart', resetIdleTimer, {passive:true});
+  document.addEventListener('click', resetIdleTimer);
+  
+  console.log('🔍 Checking for resume...');
+  const resumed = await checkResume();
+  console.log('✅ Resume check done, resumed:', resumed);
+  
+  if(!resumed){
+    if(oosActive) showOOS();
+    else showIdle();
+  }
+  if(isOnline && offlineQueue.length) flushOfflineQueue();
+  console.log('✅ Init complete');
 })();
 </script>
 </body>
