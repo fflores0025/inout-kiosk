@@ -195,7 +195,10 @@
   <span id="k-time">—</span>
   <span id="k-nfc">NFC: —</span>
 </div>
-
+// 🔧 DEBUG LOGGER
+console.log('%c🚀 KIOSK DEBUG v3.3 INICIADO', 'background:#c8ff00;color:#000;font-weight:bold;padding:4px 8px');
+console.log('📍 Timestamp:', new Date().toISOString());
+  
 <script>
 // ══════════════════════════════════════════════════════════
 //  CONFIG
@@ -641,6 +644,9 @@ async function checkStripePayment(){
   const wbId      = sessionStorage.getItem('k_wb_id');
   const amount    = sessionStorage.getItem('k_amount');
   const ref       = sessionStorage.getItem('k_ref');
+  console.log('💳 [checkStripePayment] sessionId:', sessionId);
+  console.log('💳 [checkStripePayment] wbId:', sessionStorage.getItem('k_wb_id'));
+  console.log('💳 [checkStripePayment] amount:', sessionStorage.getItem('k_amount'));
   
   console.log('[checkStripePayment] sessionId:', sessionId, 'wbId:', wbId, 'amount:', amount);
   
@@ -654,10 +660,13 @@ async function checkStripePayment(){
 
   try{
     const url = `${API_URL}/api/stripe/verify-topup?session_id=${sessionId}&wristband=${wbId}&amount=${amount}&ref=${ref||''}`;
-    console.log('[checkStripePayment] Fetching:', url);
+    console.log('[checkStripePayment] console.log('📡 [checkStripePayment] Llamando a:', url); Fetching:', url);
     
     const res  = await fetch(url);
     const data = await res.json();
+
+    console.log('📦 [checkStripePayment] Response status:', res.status);
+    console.log('📦 [checkStripePayment] Response data:', data);
     
     console.log('[checkStripePayment] Response:', data);
 
@@ -737,6 +746,9 @@ function clearSession(){
 // ══════════════════════════════════════════════════════════
 async function checkResume(){
   const params        = new URLSearchParams(window.location.search);
+  console.log('🔍 [checkResume] URL params:', window.location.search);
+  console.log('🔍 [checkResume] stripe param:', params.get('stripe'));
+  console.log('🔍 [checkResume] session_id param:', params.get('session_id'));
   const stripeResult  = params.get('stripe');
   const stripeSession = params.get('session_id') || sessionStorage.getItem('k_stripe_session');
 
@@ -814,6 +826,8 @@ async function checkResume(){
 //  SCREEN 6 — ÉXITO + QR
 // ══════════════════════════════════════════════════════════
 function showSuccess(amount, newBalance, name){
+  console.log('✅ [showSuccess] Mostrando pantalla de éxito');
+  console.log('✅ [showSuccess] amount:', amount, 'newBalance:', newBalance);
   if(navigator.vibrate) navigator.vibrate([100,60,100]);
   const ref = sessionStorage.getItem('k_ref') || ('REF-'+Date.now());
   const qrData = JSON.stringify({ref, uid:wristband?.uid||'', amount, newBalance, ts:new Date().toISOString(), pos:POS_ID});
