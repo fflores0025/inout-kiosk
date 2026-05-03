@@ -660,8 +660,7 @@ async function checkStripePayment(){
 
   try{
     const url = `${API_URL}/api/stripe/verify-topup?session_id=${sessionId}&wristband=${wbId}&amount=${amount}&ref=${ref||''}`;
-    console.log('[checkStripePayment] console.log('📡 [checkStripePayment] Llamando a:', url); Fetching:', url);
-    
+    console.log('📡 [checkStripePayment] Llamando a:', url);    
     const res  = await fetch(url);
     const data = await res.json();
 
