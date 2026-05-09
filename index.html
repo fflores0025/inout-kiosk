@@ -207,7 +207,8 @@ const SB_URL          = 'https://raoxkjnwrccoxjcipfpv.supabase.co';
 const SB_KEY          = 'sb_publishable__-K1pC4bOJHRf8JQ__OOzg_jqLxlGla';
 const API_URL         = 'https://inout-api.vercel.app';
 const STRIPE_PK       = 'pk_test_51TNg3o5UAjvrvcJnygUBrXOkDnOtxhfrTZPUtiAVXan6CzMW0Mjy3rq8vwlojTDiFENLDH3Sjze47siIGe9SBOgQ00dSeVVduC';
-const FEE_PCT         = 3.5;
+const FEE_PCT = 5;
+const FEE_FIXED = 0.30; // Comisión fija en euros
 const AMOUNTS         = [5, 10, 20, 30, 50, 100];
 const POS_ID          = 'kiosk-01';
 const SUP_PIN         = '1234';
@@ -514,27 +515,131 @@ function updatePayBtn(){
 // ══════════════════════════════════════════════════════════
 function showSummary(){
   if(!selectedAmt || !wristband) return;
-  if((wristband.balance||0) + selectedAmt > MAX_BALANCE){ toast(T('balance_limit',{max:MAX_BALANCE}), 'warn', 4000); return; }
+  if((wristband.balance||0) + selectedAmt > MAX_BALANCE){ 
+    toast(T('balance_limit',{max:MAX_BALANCE}), 'warn', 4000); 
+    return; 
+  }
+  
   const fee = calcFee(selectedAmt), total = selectedAmt + fee;
   const body = document.getElementById('k-body');
-  body.dataset.screen = 'summary'; resetIdleTimer();
+  body.dataset.screen = 'summary'; 
+  resetIdleTimer();
+  
   body.innerHTML = `
-    <div style="font-family:Syne;font-size:19px;font-weight:700;text-align:center;width:100%">${T('summary')}</div>
-    <div class="summary">
-      <div class="sum-row"><span>${T('wristband')}</span><span class="val" style="font-family:monospace;font-size:12px">${wristband.uid}</span></div>
-      <div class="sum-row"><span>${T('holder')}</span><span class="val">${wristband.holder_name||'—'}</span></div>
-      <div class="sum-row"><span>${T('recharge')}</span><span class="val">${fmt(selectedAmt)} €</span></div>
-      <div class="sum-row"><span>${T('commission')} (${FEE_PCT}%)</span><span class="val" style="color:var(--muted)">${fmt(fee)} €</span></div>
-      <div class="sum-row total"><span>${T('total')}</span><span class="val">${fmt(total)} €</span></div>
+    <div style="font-family:Syne;font-size:19px;font-weight:700;text-align:center;width:100%;margin-bottom:16px">
+      ${T('summary')}
     </div>
-    <div style="width:100%;margin-top:13px;display:flex;flex-direction:column;gap:9px">
-      <button class="btn btn-p" onclick="startPayment()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></svg>
+    
+    <div class="summary">
+      <div class="sum-row">
+        <span>${T('wristband')}</span>
+        <span class="val" style="font-family:monospace;font-size:12px">${wristband.uid}</span>
+      </div>
+      <div class="sum-row">
+        <span>${T('holder')}</span>
+        <span class="val">${wristband.holder_name||'—'}</span>
+      </div>
+      <div class="sum-row">
+        <span>${T('recharge')}</span>
+        <span class="val">${fmt(selectedAmt)} €</span>
+      </div>
+      <div class="sum-row">
+        <span>${T('commission')} (${FEE_PCT}%)</span>
+        <span class="val" style="color:var(--muted)">${fmt(fee)} €</span>
+      </div>
+      <div class="sum-row total">
+        <span>${T('total')}</span>
+        <span class="val">${fmt(total)} €</span>
+      </div>
+    </div>
+    
+    <!-- SELECTOR DE MÉTODO DE PAGO -->
+    <div style="margin:20px 0 16px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm)">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted)">
+        💳 Método de pago:
+      </div>
+      <div style="display:flex;gap:8px">
+        <button 
+          id="btn-terminal" 
+          class="payment-method-btn active" 
+          onclick="selectPaymentMethod('terminal')"
+          style="flex:1;padding:12px;background:var(--a1);color:#000;border:2px solid var(--a1);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
+        >
+          🏪 Datáfono
+        </button>
+        <button 
+          id="btn-online" 
+          class="payment-method-btn" 
+          onclick="selectPaymentMethod('online')"
+          style="flex:1;padding:12px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
+        >
+          🌐 Online
+        </button>
+      </div>
+      <div id="payment-method-info" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center">
+        Acerca tu tarjeta al datáfono del kiosco
+      </div>
+    </div>
+    
+    <div style="width:100%;display:flex;flex-direction:column;gap:9px">
+      <button class="btn btn-p" onclick="confirmPaymentMethod()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect width="20" height="14" x="2" y="5" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
         ${T('confirm')}
       </button>
-      <button class="btn btn-g" onclick="showBalance(wristband)">${T('change_amount')}</button>
-      <button class="btn btn-g" style="font-size:13px;min-height:44px;padding:11px" onclick="showIdle()">${T('cancel')}</button>
+      <button class="btn btn-g" onclick="showBalance(wristband)">
+        ${T('change_amount')}
+      </button>
+      <button class="btn btn-g" style="font-size:13px;min-height:44px;padding:11px" onclick="showIdle()">
+        ${T('cancel')}
+      </button>
     </div>`;
+}
+
+// Variable global para método de pago seleccionado
+let paymentMethod = 'terminal'; // Por defecto: datáfono
+
+function selectPaymentMethod(method){
+  paymentMethod = method;
+  
+  const btnTerminal = document.getElementById('btn-terminal');
+  const btnOnline = document.getElementById('btn-online');
+  const info = document.getElementById('payment-method-info');
+  
+  if(method === 'terminal'){
+    // Activar botón datáfono
+    btnTerminal.style.background = 'var(--a1)';
+    btnTerminal.style.color = '#000';
+    btnTerminal.style.borderColor = 'var(--a1)';
+    
+    btnOnline.style.background = 'var(--bg)';
+    btnOnline.style.color = 'var(--muted)';
+    btnOnline.style.borderColor = 'var(--border)';
+    
+    info.textContent = 'Acerca tu tarjeta al datáfono del kiosco';
+    
+  } else {
+    // Activar botón online
+    btnOnline.style.background = 'var(--a1)';
+    btnOnline.style.color = '#000';
+    btnOnline.style.borderColor = 'var(--a1)';
+    
+    btnTerminal.style.background = 'var(--bg)';
+    btnTerminal.style.color = 'var(--muted)';
+    btnTerminal.style.borderColor = 'var(--border)';
+    
+    info.textContent = 'Serás redirigido a Stripe para pagar de forma segura';
+  }
+}
+
+function confirmPaymentMethod(){
+  if(paymentMethod === 'terminal'){
+    startPaymentTerminal(); // Pago con datáfono físico
+  } else {
+    startPaymentOnline(); // Pago online con redirección
+  }
 }
 
 // ══════════════════════════════════════════════════════════
