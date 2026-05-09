@@ -559,7 +559,7 @@ function showSummary(){
         💳 Método de pago:
       </div>
       <div style="display:flex;gap:8px">
-      <button 
+<button 
   id="btn-terminal" 
   class="payment-method-btn" 
   onclick="selectPaymentMethod('terminal')"
@@ -569,26 +569,26 @@ function showSummary(){
 </button>
 <button 
   id="btn-online" 
-  class="payment-method-btn active" 
+  class="payment-method-btn" 
   onclick="selectPaymentMethod('online')"
-  style="flex:1;padding:12px;background:var(--a1);color:#000;border:2px solid var(--a1);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
+  style="flex:1;padding:12px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
 >
   🌐 Online
 </button>
       </div>
-      <div id="payment-method-info" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center">
-  Serás redirigido a Stripe para pagar de forma segura
+      <div id="payment-method-info" style="margin-top:8px;font-size:11px;color:var(--warn);text-align:center">
+  👆 Selecciona un método de pago
 </div>
     </div>
     
     <div style="width:100%;display:flex;flex-direction:column;gap:9px">
-      <button class="btn btn-p" onclick="confirmPaymentMethod()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <rect width="20" height="14" x="2" y="5" rx="2"/>
-          <path d="M2 10h20"/>
-        </svg>
-        ${T('confirm')}
-      </button>
+      <button class="btn btn-p" id="confirm-payment-btn" onclick="confirmPaymentMethod()" disabled>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <rect width="20" height="14" x="2" y="5" rx="2"/>
+    <path d="M2 10h20"/>
+  </svg>
+  ${T('confirm')}
+</button>
       <button class="btn btn-g" onclick="showBalance(wristband)">
         ${T('change_amount')}
       </button>
@@ -599,7 +599,7 @@ function showSummary(){
 }
 
 // Variable global para método de pago seleccionado
-let paymentMethod = 'online'; // Por defecto: online (para pruebas)
+let paymentMethod = 'null'; // Sin selección por defecto - usuario debe elegir
 
 function selectPaymentMethod(method){
   paymentMethod = method;
@@ -607,9 +607,12 @@ function selectPaymentMethod(method){
   const btnTerminal = document.getElementById('btn-terminal');
   const btnOnline = document.getElementById('btn-online');
   const info = document.getElementById('payment-method-info');
+  const confirmBtn = document.getElementById('confirm-payment-btn');
+  
+  // Habilitar botón de confirmar
+  if(confirmBtn) confirmBtn.disabled = false;
   
   if(method === 'terminal'){
-    // Activar botón datáfono
     btnTerminal.style.background = 'var(--a1)';
     btnTerminal.style.color = '#000';
     btnTerminal.style.borderColor = 'var(--a1)';
@@ -618,10 +621,10 @@ function selectPaymentMethod(method){
     btnOnline.style.color = 'var(--muted)';
     btnOnline.style.borderColor = 'var(--border)';
     
+    info.style.color = 'var(--muted)';
     info.textContent = 'Acerca tu tarjeta al datáfono del kiosco';
     
   } else {
-    // Activar botón online
     btnOnline.style.background = 'var(--a1)';
     btnOnline.style.color = '#000';
     btnOnline.style.borderColor = 'var(--a1)';
@@ -630,15 +633,21 @@ function selectPaymentMethod(method){
     btnTerminal.style.color = 'var(--muted)';
     btnTerminal.style.borderColor = 'var(--border)';
     
+    info.style.color = 'var(--muted)';
     info.textContent = 'Serás redirigido a Stripe para pagar de forma segura';
   }
 }
 
 function confirmPaymentMethod(){
+  if(!paymentMethod){
+    toast('⚠️ Selecciona un método de pago', 'warn');
+    return;
+  }
+  
   if(paymentMethod === 'terminal'){
-    startPaymentTerminal(); // Pago con datáfono físico
+    startPaymentTerminal();
   } else {
-    startPaymentOnline(); // Pago online con redirección
+    startPaymentOnline();
   }
 }
 
