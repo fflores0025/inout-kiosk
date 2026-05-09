@@ -559,26 +559,26 @@ function showSummary(){
         💳 Método de pago:
       </div>
       <div style="display:flex;gap:8px">
-        <button 
-          id="btn-terminal" 
-          class="payment-method-btn active" 
-          onclick="selectPaymentMethod('terminal')"
-          style="flex:1;padding:12px;background:var(--a1);color:#000;border:2px solid var(--a1);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
-        >
-          🏪 Datáfono
-        </button>
-        <button 
-          id="btn-online" 
-          class="payment-method-btn" 
-          onclick="selectPaymentMethod('online')"
-          style="flex:1;padding:12px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
-        >
-          🌐 Online
-        </button>
+      <button 
+  id="btn-terminal" 
+  class="payment-method-btn" 
+  onclick="selectPaymentMethod('terminal')"
+  style="flex:1;padding:12px;background:var(--bg);color:var(--muted);border:2px solid var(--border);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
+>
+  🏪 Datáfono
+</button>
+<button 
+  id="btn-online" 
+  class="payment-method-btn active" 
+  onclick="selectPaymentMethod('online')"
+  style="flex:1;padding:12px;background:var(--a1);color:#000;border:2px solid var(--a1);border-radius:var(--r-sm);font-weight:600;cursor:pointer;transition:all 0.2s"
+>
+  🌐 Online
+</button>
       </div>
       <div id="payment-method-info" style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center">
-        Acerca tu tarjeta al datáfono del kiosco
-      </div>
+  Serás redirigido a Stripe para pagar de forma segura
+</div>
     </div>
     
     <div style="width:100%;display:flex;flex-direction:column;gap:9px">
@@ -599,7 +599,7 @@ function showSummary(){
 }
 
 // Variable global para método de pago seleccionado
-let paymentMethod = 'terminal'; // Por defecto: datáfono
+let paymentMethod = 'online'; // Por defecto: online (para pruebas)
 
 function selectPaymentMethod(method){
   paymentMethod = method;
@@ -642,6 +642,71 @@ function confirmPaymentMethod(){
   }
 }
 
+async function startPaymentTerminal(){
+  toast('⚠️ Datáfono no disponible aún. Usa pago online.', 'warn', 3000);
+  selectPaymentMethod('online');
+  setTimeout(() => startPaymentOnline(), 500);
+}
+
+async function startPaymentOnline(){
+  if(!wristband || selectedAmt <= 0) return;
+  
+  const confBtn = document.querySelector('#k-body .btn-p');
+  if(confBtn){ confBtn.disabled = true; confBtn.textContent = 'Procesando…'; }
+
+  if(!isOnline){
+    offlineQueue.push({
+      wristband_id: wristband.id, 
+      uid: wristband.uid, 
+      amount: selectedAmt, 
+      event_id: wristband.event_id, 
+      operator: 'Kiosco autoservicio ' + POS_ID, 
+      queued_at: new Date().toISOString()
+    });
+    localStorage.setItem('k_offline_q', JSON.stringify(offlineQueue));
+    logEvent('queued_offline', {uid: wristband.uid, amount: selectedAmt});
+    toast(T('offline_queue', {n: offlineQueue.length}), 'warn', 4000);
+    showIdle(); 
+    return;
+  }
+
+  try{
+    const res = await fetch(API_URL + '/api/stripe/topup', {
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        wristband_id: wristband.id, 
+        uid: wristband.uid,
+        amount: selectedAmt, 
+        event_id: wristband.event_id,
+        operator: 'Kiosco autoservicio ' + POS_ID,
+        success_url: window.location.origin + '?stripe=success&session_id={CHECKOUT_SESSION_ID}',
+        cancel_url: window.location.origin + '?stripe=cancel',
+      })
+    });
+    
+    const data = await res.json();
+    
+    if(data.error){ 
+      toast('Error: ' + data.error, 'err'); 
+      showSummary(); 
+      return; 
+    }
+
+    sessionStorage.setItem('k_stripe_session', data.session_id || '');
+    sessionStorage.setItem('k_wb_id', wristband.id);
+    sessionStorage.setItem('k_amount', String(selectedAmt));
+    sessionStorage.setItem('k_ref', data.reference || '');
+
+    showStripeCheckout(data.checkout_url, data.session_id);
+    
+  } catch(err){
+    console.error(err);
+    toast('Error de conexión. Inténtalo de nuevo.', 'err'); 
+    showSummary();
+  }
+}
+  
 // ══════════════════════════════════════════════════════════
 //  SCREEN 4 — PAGO
 // ══════════════════════════════════════════════════════════
