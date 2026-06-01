@@ -373,8 +373,7 @@ async function onScan(uid){
   const ring = document.querySelector('.nfc-ring');
   if(ring) ring.className = 'nfc-ring found';
 
-  const {data:wb, error} = await _sb.from('rfid_wristbands').select('*').eq('uid', uid).maybeSingle();
-  if(error || !wb){
+   const {data:wb, error} = await _sb.from('rfid_wristbands').select('*').eq('uid', uid).eq('organization_id', localStorage.getItem('inout_org_id')).maybeSingle();  if(error || !wb){
     if(ring) ring.className = 'nfc-ring err-ring';
     toast('Pulsera no registrada: '+uid, 'err'); setTimeout(() => showIdle(), 2200); return;
   }
